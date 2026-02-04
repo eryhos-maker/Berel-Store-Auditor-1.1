@@ -12,10 +12,11 @@ export default defineConfig(({ mode }) => {
     base: './', // Se usa ruta relativa para evitar 404 en subdirectorios
     define: {
       // Polyfill process.env para uso seguro en el cliente.
-      // Esto asegura que los valores se reemplacen en tiempo de compilación.
-      'process.env.API_KEY': JSON.stringify(env.API_KEY),
-      'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
-      'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
+      // Se añade "|| ''" para asegurar que si la variable es undefined, se reemplace por un string vacío
+      // en lugar de dejar un token indefinido que pueda causar ReferenceError.
+      'process.env.API_KEY': JSON.stringify(env.API_KEY || ''),
+      'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || ''),
+      'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || ''),
     }
   };
 });
