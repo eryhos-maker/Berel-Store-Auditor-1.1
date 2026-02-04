@@ -19,49 +19,84 @@ export const generateActionPlan = async (audit: AuditRecord): Promise<string> =>
     // 3. Initialize Client
     const ai = new GoogleGenAI({ apiKey });
 
-    // 4. Prepare Context (Failed Items)
-    const failedItems: string[] = [];
+    // 4. Prepare & Prioritize Findings
+    interface Finding {
+      text: string;
+      percentage: number;
+      hasObservation: boolean;
+    }
+
+    const findingsList: Finding[] = [];
     
     AUDIT_SECTIONS.forEach(section => {
       section.questions.forEach(q => {
         const item = audit.items[q.id];
         // Filter items that did not achieve max points
         if (item && item.score < q.maxPoints) { 
-           failedItems.push(`- ${q.category}: ${q.criterion} (Puntaje: ${item.score}/${q.maxPoints}). Obs: ${item.observation || 'Ninguna'}`);
+           const percentage = item.score / q.maxPoints;
+           const hasObservation = !!(item.observation && item.observation.trim().length > 0);
+           
+           // Determine severity label
+           let severityTag = '[MEJORABLE]';
+           if (percentage <= 0.5) severityTag = '[CRÍTICO]';
+           else if (percentage <= 0.75) severityTag = '[ALERTA]';
+
+           // Flag missing observations explicitly for the AI
+           const obsText = hasObservation ? item.observation : "⚠️ EL AUDITOR NO REGISTRÓ OBSERVACIÓN (Investigar causa raíz)";
+
+           findingsList.push({
+             text: `${severityTag} ${q.category}: ${q.criterion} (Obtenido: ${item.score}/${q.maxPoints}). Detalle: ${obsText}`,
+             percentage: percentage,
+             hasObservation: hasObservation
+           });
         }
       });
     });
 
     // Handle perfect score case
-    if (failedItems.length === 0) {
+    if (findingsList.length === 0) {
       return "¡Excelente ejecución! La tienda cumple con todos los estándares operativos evaluados. Se recomienda reconocer al personal y mantener la supervisión actual para asegurar la consistencia.";
     }
 
+    // SORTING LOGIC:
+    // 1. Items with <= 50% score come first (Critical).
+    // 2. Then items sorted by lowest percentage.
+    // 3. Within same percentage, prioritize items missing observations (as they are process failures).
+    findingsList.sort((a, b) => {
+      if (a.percentage !== b.percentage) {
+        return a.percentage - b.percentage; // Ascending: lower score first
+      }
+      // If percentages are equal, put the one missing observation first to highlight the gap
+      return (a.hasObservation === b.hasObservation) ? 0 : a.hasObservation ? 1 : -1;
+    });
+
     // 5. Construct Prompt
     const prompt = `
-      Genera un Plan de Acción Correctivo para la tienda: "${audit.storeName}".
+      Genera un Plan de Acción Correctivo, conciso y directo para la tienda: "${audit.storeName}".
       
-      Contexto de Auditoría:
+      Datos Generales:
       - Calificación Total: ${audit.totalScore}/100
-      - Estatus: ${audit.status}
+      - Estatus Global: ${audit.status}
       
-      Hallazgos Detectados (Áreas de Oportunidad):
-      ${failedItems.join('\n')}
+      LISTA DE HALLAZGOS (Ordenados por prioridad/gravedad):
+      ${findingsList.map(f => f.text).join('\n')}
 
-      Instrucciones de respuesta:
-      1. Proporciona de 3 a 5 acciones concretas y prioritarias para corregir los hallazgos.
-      2. Usa un lenguaje directivo, profesional y motivador.
-      3. Sé conciso. Ve directo al grano.
-      4. Formato: Lista simple o viñetas (sin markdown complejo).
+      Instrucciones Específicas:
+      1. Analiza primero los puntos marcados como [CRÍTICO] y [ALERTA]. Son la prioridad absoluta.
+      2. Si un hallazgo dice "⚠️ EL AUDITOR NO REGISTRÓ OBSERVACIÓN", incluye en el plan una acción para validar por qué falló ese punto, ya que no hay datos claros.
+      3. Genera de 3 a 5 acciones correctivas agrupadas por urgencia.
+      4. Usa lenguaje imperativo y motivador (Ej: "Implementar...", "Corregir...", "Asegurar...").
+      5. No uses markdown complejo (como negritas excesivas), usa viñetas simples.
+      6. Enfócate en la solución operativa, no en la teoría.
     `;
 
-    // 6. Generate Content using the specific model and config
+    // 6. Generate Content
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
-        systemInstruction: "Eres un consultor experto en operaciones de retail y auditoría para tiendas de pintura Berel. Tu objetivo es proporcionar planes de acción claros, ejecutables y orientados a resultados inmediatos.",
-        temperature: 0.7, // Balanced creativity and precision
+        systemInstruction: "Eres un Gerente Regional de Operaciones de Berel. Eres estricto con los estándares de marca pero constructivo. Tu objetivo es levantar la calificación de la tienda inmediatamente.",
+        temperature: 0.5, // Lower temperature for more focused/deterministic plans
       }
     });
 
@@ -69,6 +104,6 @@ export const generateActionPlan = async (audit: AuditRecord): Promise<string> =>
 
   } catch (error) {
     console.error("Error generating action plan:", error);
-    return "Ocurrió un error de conexión con el servicio de IA. Por favor verifique su conexión a internet e intente nuevamente.";
+    return "Ocurrió un error de conexión con el servicio de IA. Intente generar el plan nuevamente.";
   }
 };

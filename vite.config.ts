@@ -11,9 +11,11 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     base: '/', // Asegura rutas absolutas para SPA
     define: {
-      // Polyfill process.env.API_KEY for the Google GenAI SDK
-      // This allows 'process.env.API_KEY' usage in the browser code
-      'process.env.API_KEY': JSON.stringify(env.API_KEY)
+      // Polyfill process.env para uso seguro en el cliente.
+      // Esto asegura que los valores se reemplacen en tiempo de compilación.
+      'process.env.API_KEY': JSON.stringify(env.API_KEY),
+      'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
+      'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
     }
   };
 });

@@ -1,10 +1,10 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Use environment variables for production security.
-// Fallback values are kept only for local dev convenience if .env is missing, 
-// but should be configured in your deployment settings (Vercel/Netlify).
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://xnzjsogdymsaefjxeeby.supabase.co';
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_1ZnmuRAcVix0WWoU4KQ1tg_W0HLLVAr';
+// Usamos process.env que ahora está "polifilleado" en vite.config.ts
+// Esto garantiza que el proceso de build reemplace estas variables con cadenas de texto,
+// previniendo errores "Cannot read properties of undefined" relacionados con import.meta.env.
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://xnzjsogdymsaefjxeeby.supabase.co';
+const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_1ZnmuRAcVix0WWoU4KQ1tg_W0HLLVAr';
 
 let client: SupabaseClient | null = null;
 
