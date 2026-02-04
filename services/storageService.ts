@@ -132,84 +132,85 @@ export const StorageService = {
       return audit;
     }
 
-    // 0. VERIFICAR EXISTENCIA (Lógica UPSERT Manual)
-    let recordId = audit.id;
-    let isUpdate = false;
+    // 1. UPSERT HEADER (Insertar o Actualizar atómicamente)
+    // Usamos 'upsert' confiando en la restricción única del 'folio'.
+    // Esto evita condiciones de carrera y errores de llaves duplicadas.
+    const headerData = {
+        folio: audit.folio,
+        tienda_id: audit.storeId,
+        fecha: audit.date,
+        hora: audit.time,
+        gerente_encargado_id: audit.managerId,
+        auditor_id: audit.auditorId,
+        // Intentamos guardar el plan si la columna existe.
+        plan_accion: audit.actionPlan
+    };
 
-    // Si no tenemos ID, buscamos por Folio para evitar el error de duplicado
-    if (!isUUID(recordId)) {
-        const { data: existing } = await supabase
-           .from('datos_auditoria')
-           .select('id')
-           .eq('folio', audit.folio)
-           .maybeSingle();
-        
-        if (existing) {
-            recordId = existing.id;
-            isUpdate = true;
-        }
-    } else {
-        isUpdate = true;
+    const { data: auditHeader, error: headerError } = await supabase
+      .from('datos_auditoria')
+      .upsert(headerData, { onConflict: 'folio' })
+      .select()
+      .single();
+
+    if (headerError) {
+      console.error('Error saving audit header:', headerError);
+      
+      // Fallback: Si el error es porque no existe la columna 'plan_accion', reintentamos sin ella
+      if (headerError.message.includes('column "plan_accion" of relation "datos_auditoria" does not exist')) {
+         delete (headerData as any).plan_accion;
+         const { data: retryHeader, error: retryError } = await supabase
+            .from('datos_auditoria')
+            .upsert(headerData, { onConflict: 'folio' })
+            .select()
+            .single();
+            
+         if (retryError) {
+            alert('Error crítico al guardar: ' + retryError.message);
+            throw retryError;
+         }
+         return { ...audit, id: retryHeader.id }; // Retornamos sin guardar detalles para evitar inconsistencias
+      }
+
+      alert('Error al guardar auditoría: ' + headerError.message);
+      throw headerError;
     }
 
-    // 1. ACTUALIZAR O INSERTAR
-    if (isUpdate) {
-        console.log("Actualizando auditoría existente:", recordId);
-        
-        // Actualizamos firmas en tablas relacionadas por si cambiaron (idempotente)
-        if (audit.managerId && audit.managerSignature) {
-          await supabase.from('encargado').update({ firma_encargado: audit.managerSignature }).eq('id', audit.managerId);
-        }
-        if (audit.auditorId && audit.auditorSignature) {
-          await supabase.from('auditor').update({ firma_auditor: audit.auditorSignature }).eq('id', audit.auditorId);
-        }
-        
-        // Como la tabla 'datos_auditoria' NO tiene campo para plan de acción en el esquema,
-        // y el resto de datos (folio, tienda) no cambian, solo retornamos el objeto con el ID correcto.
-        return { ...audit, id: recordId };
+    const recordId = auditHeader.id;
 
-    } else {
-        // --- INSERTAR NUEVO ---
-        const { data: auditHeader, error: headerError } = await supabase
-          .from('datos_auditoria')
-          .insert({
-            folio: audit.folio,
-            tienda_id: audit.storeId,
-            fecha: audit.date,
-            hora: audit.time,
-            gerente_encargado_id: audit.managerId,
-            auditor_id: audit.auditorId
-          })
-          .select()
-          .single();
+    // 2. Update Signatures (Idempotente)
+    if (audit.managerId && audit.managerSignature) {
+      await supabase.from('encargado').update({ firma_encargado: audit.managerSignature }).eq('id', audit.managerId);
+    }
+    if (audit.auditorId && audit.auditorSignature) {
+      await supabase.from('auditor').update({ firma_auditor: audit.auditorSignature }).eq('id', audit.auditorId);
+    }
 
-        if (headerError || !auditHeader) {
-          console.error('Error saving audit header:', headerError);
-          alert('Error al guardar auditoría: ' + (headerError?.message || 'Error desconocido'));
-          throw headerError;
-        }
+    // 3. Save Details (Calificaciones)
+    // Estrategia: Borrar detalles anteriores de este ID y re-insertar los actuales.
+    // Esto es más seguro que intentar hacer update fila por fila.
+    const { error: deleteError } = await supabase
+        .from('calificaciones_auditoria')
+        .delete()
+        .eq('datos_auditoria_id', recordId);
 
-        // Actualizar firmas tras crear cabecera
-        if (audit.managerId && audit.managerSignature) {
-          await supabase.from('encargado').update({ firma_encargado: audit.managerSignature }).eq('id', audit.managerId);
-        }
-        if (audit.auditorId && audit.auditorSignature) {
-          await supabase.from('auditor').update({ firma_auditor: audit.auditorSignature }).eq('id', audit.auditorId);
-        }
+    if (deleteError) console.error("Error limpiando detalles previos:", deleteError);
 
-        // Insertar Detalles (Calificaciones)
-        const detailsPayload: any = {
-          datos_auditoria_id: auditHeader.id
-        };
+    // Preparar payload de detalles
+    const detailsPayload: any = {
+      datos_auditoria_id: recordId
+    };
 
-        Object.values(audit.items).forEach((item: AuditItem) => {
-          const colBase = QUESTION_DB_MAP[item.questionId];
-          if (colBase) {
-            detailsPayload[colBase] = item.score;
-            detailsPayload[`${colBase}_obs`] = item.observation;
-          }
-        });
+    let hasDetails = false;
+    Object.values(audit.items).forEach((item: AuditItem) => {
+      const colBase = QUESTION_DB_MAP[item.questionId];
+      if (colBase) {
+        detailsPayload[colBase] = item.score;
+        detailsPayload[`${colBase}_obs`] = item.observation;
+        hasDetails = true;
+      }
+    });
 
+    if (hasDetails) {
         const { error: detailsError } = await supabase
           .from('calificaciones_auditoria')
           .insert(detailsPayload);
@@ -217,9 +218,9 @@ export const StorageService = {
         if (detailsError) {
           console.error('Error saving details:', detailsError);
         }
-        
-        return { ...audit, id: auditHeader.id };
     }
+    
+    return { ...audit, id: recordId };
   },
 
   getAudits: async (): Promise<AuditRecord[]> => {
@@ -228,7 +229,7 @@ export const StorageService = {
     const { data, error } = await supabase
       .from('datos_auditoria')
       .select(`
-        id, folio, fecha, hora,
+        id, folio, fecha, hora, plan_accion,
         tienda (id, nombre),
         encargado (id, nombre, firma_encargado),
         auditor (id, nombre, firma_auditor),
@@ -280,7 +281,7 @@ export const StorageService = {
         items: items,
         totalScore: totalScore,
         status: status,
-        actionPlan: '',
+        actionPlan: row.plan_accion || '', // Recuperamos el plan si existe
         managerSignature: row.encargado?.firma_encargado || '',
         auditorSignature: row.auditor?.firma_auditor || ''
       };

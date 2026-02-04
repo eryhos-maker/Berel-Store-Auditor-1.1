@@ -89,7 +89,18 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
 
   const handleShareWhatsApp = async () => {
     setGeneratingPDF(true);
-    const text = `*REPORTE AUDITORÍA BEREL*\n\n📄 *Folio:* ${audit.folio}\n🏪 *Tienda:* ${audit.storeName}\n📅 *Fecha:* ${audit.date}\n🏆 *Calif:* ${audit.totalScore}/100\n📊 *Estado:* ${getStatusLabel(audit.status)}\n\n📎 _Se adjunta el reporte detallado en PDF._`;
+    
+    // Construct Professional Message
+    const title = "*📊 REPORTE DE AUDITORÍA BEREL*";
+    const details = [
+        `*Folio:* ${audit.folio}`,
+        `*Tienda:* ${audit.storeName}`,
+        `*Fecha:* ${audit.date}`,
+        `*Calif:* ${audit.totalScore}/100`,
+        `*Estado:* ${getStatusLabel(audit.status)}`
+    ].join('\n');
+    
+    const mobileText = `${title}\n\n${details}\n\n📎 _Se adjunta reporte PDF detallado._`;
     
     // 1. Try Native Sharing (Mobile) - Sends the actual PDF file
     if (navigator.share && navigator.canShare) {
@@ -101,7 +112,7 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
             title: 'Reporte Auditoría Berel',
-            text: text,
+            text: mobileText,
             files: [file]
           });
           setGeneratingPDF(false);
@@ -113,12 +124,20 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
     }
 
     // 2. Fallback for Desktop / WhatsApp Web
+    // We automatically download the PDF so the user has it ready to drag-and-drop
+    try {
+        const element = document.getElementById('report-content');
+        await html2pdf().set(getPDFOptions()).from(element).save();
+    } catch (e) {
+        console.error("Error auto-downloading for share fallback", e);
+    }
+    
     setGeneratingPDF(false);
     
-    // We cannot attach files programmatically to WhatsApp Web via URL.
-    // We provide a link and an instruction.
-    const message = `${text}\n\n⚠️ *NOTA PARA PC:* Descarga el PDF desde la aplicación y adjúntalo manualmente a este chat.`;
-    const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    // Detailed instructions for the user
+    const desktopText = `${title}\n\n${details}\n\n⚠️ *ACCIÓN REQUERIDA:* \nEl reporte PDF se ha descargado en este dispositivo. Por favor arrástrelo y adjúntelo a este chat manualmente.`;
+    
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(desktopText)}`;
     window.open(waUrl, '_blank');
   };
 
