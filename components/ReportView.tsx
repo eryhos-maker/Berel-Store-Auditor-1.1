@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { AuditRecord, AuditItem } from '../types';
-import { generateActionPlan } from '../services/geminiService';
 import { StorageService } from '../services/storageService';
 import { AUDIT_SECTIONS } from '../constants';
 
@@ -12,25 +11,8 @@ interface ReportViewProps {
   onClose: () => void;
 }
 
-// Internal Tooltip Component for UX improvement
-const SimpleTooltip = ({ message, children }: { message: string, children?: React.ReactNode }) => {
-  return (
-    <div className="group relative flex flex-col items-center">
-      {children}
-      <div className="absolute bottom-full mb-2 hidden flex-col items-center group-hover:flex z-50">
-        <span className="relative z-10 p-2 text-xs leading-tight text-white bg-gray-900 shadow-xl rounded-md w-48 text-center border border-gray-700">
-          {message}
-        </span>
-        <div className="w-3 h-3 -mt-2 rotate-45 bg-gray-900 border-b border-r border-gray-700"></div>
-      </div>
-    </div>
-  );
-};
-
 const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
-  const [loadingAI, setLoadingAI] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
-  const [aiPlan, setAiPlan] = useState(audit.actionPlan || '');
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -48,18 +30,6 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
       case 'CRITICO': return 'CRÍTICO';
       default: return status;
     }
-  };
-
-  const handleGeneratePlan = async () => {
-    setLoadingAI(true);
-    const plan = await generateActionPlan(audit);
-    setAiPlan(plan);
-    
-    // Update local storage with the generated plan
-    const updatedAudit = { ...audit, actionPlan: plan };
-    StorageService.saveAudit(updatedAudit);
-    
-    setLoadingAI(false);
   };
 
   const getPDFOptions = () => {
@@ -152,17 +122,6 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
         </button>
         
         <div className="flex flex-wrap gap-2 justify-end w-full md:w-auto">
-          {!aiPlan && !loadingAI && (
-             <SimpleTooltip message="La IA analizará los hallazgos críticos de la auditoría y redactará automáticamente un plan de acción correctivo.">
-               <button 
-                 onClick={handleGeneratePlan}
-                 className="flex items-center gap-2 bg-blue-900 text-white px-4 py-2 rounded shadow text-sm hover:bg-blue-800 transition-colors"
-               >
-                 ✨ Generar Plan IA
-               </button>
-             </SimpleTooltip>
-          )}
-
           <button 
             onClick={handleDownloadPDF} 
             disabled={generatingPDF}
@@ -250,11 +209,11 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
         </div>
 
         {/* ACTION PLAN - Restricted Height */}
-        {aiPlan && (
+        {audit.actionPlan && (
           <div className="mb-3 shrink-0">
              <h3 className="text-[10px] font-bold text-blue-900 uppercase border-b border-gray-200 mb-1 pb-0.5">🚀 Plan de Acción</h3>
              <div className="bg-white text-[9px] text-justify text-gray-700 leading-snug p-2 border border-gray-100 rounded max-h-[1.8in] overflow-hidden">
-               {aiPlan}
+               {audit.actionPlan}
              </div>
           </div>
         )}
