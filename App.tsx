@@ -32,10 +32,17 @@ const App: React.FC = () => {
   };
 
   const handleFinishAudit = async (audit: AuditRecord) => {
-    await StorageService.saveAudit(audit);
-    setCurrentAudit(audit);
-    setPreviousView('HOME');
-    setView('REPORT');
+    try {
+      // Guardamos y obtenemos el registro actualizado (con ID real de DB)
+      const savedAudit = await StorageService.saveAudit(audit);
+      setCurrentAudit(savedAudit);
+      setPreviousView('HOME');
+      setView('REPORT');
+    } catch (e) {
+      console.error("Error en flujo de guardado:", e);
+      // En caso de error crítico, mantenemos el audit local para que no pierda datos
+      setCurrentAudit(audit);
+    }
   };
 
   const handleOpenAdmin = () => {
