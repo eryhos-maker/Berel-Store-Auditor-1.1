@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
-    base: '/', // Asegura rutas absolutas para SPA
+    base: './', // Se usa ruta relativa para evitar 404 en subdirectorios
     define: {
       // Polyfill process.env para uso seguro en el cliente.
       // Esto asegura que los valores se reemplacen en tiempo de compilación.
