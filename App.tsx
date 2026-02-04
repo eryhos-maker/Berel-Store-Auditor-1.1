@@ -7,6 +7,21 @@ import { StorageService } from './services/storageService';
 
 type ViewState = 'HOME' | 'AUDIT' | 'REPORT' | 'ADMIN';
 
+// Tooltip Component for UX improvement
+const SimpleTooltip = ({ message, children }: { message: string, children?: React.ReactNode }) => {
+  return (
+    <div className="group relative flex flex-col items-center w-full">
+      {children}
+      <div className="absolute bottom-full mb-2 hidden flex-col items-center group-hover:flex z-50 w-64">
+        <span className="relative z-10 p-2 text-xs leading-tight text-white bg-gray-900 shadow-xl rounded-md text-center border border-gray-700">
+          {message}
+        </span>
+        <div className="w-3 h-3 -mt-2 rotate-45 bg-gray-900 border-b border-r border-gray-700"></div>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('HOME');
   const [currentAudit, setCurrentAudit] = useState<AuditRecord | null>(null);
@@ -72,12 +87,14 @@ const App: React.FC = () => {
                 <span className="mr-3 text-2xl">📋</span> Iniciar Nueva Auditoría
               </button>
               
-              <button 
-                onClick={handleOpenAdmin}
-                className="w-full bg-white text-blue-900 font-semibold py-3 rounded-xl hover:bg-blue-50 transition border-2 border-blue-900"
-              >
-                ⚙️ Consola Administrativa
-              </button>
+              <SimpleTooltip message="Panel para administradores: Consulta el historial de auditorías, exporta reportes a CSV y administra el catálogo de tiendas y personal.">
+                <button 
+                  onClick={handleOpenAdmin}
+                  className="w-full bg-white text-blue-900 font-semibold py-3 rounded-xl hover:bg-blue-50 transition border-2 border-blue-900"
+                >
+                  ⚙️ Consola Administrativa
+                </button>
+              </SimpleTooltip>
             </div>
 
             <div className="mt-12 text-center">
