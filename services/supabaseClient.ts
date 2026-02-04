@@ -1,28 +1,20 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Usamos process.env que está siendo reemplazado por Vite en tiempo de compilación.
-// Agregamos .trim() para limpiar espacios accidentales al copiar/pegar las llaves.
-const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || '').trim();
-const SUPABASE_KEY = (process.env.VITE_SUPABASE_ANON_KEY || '').trim();
+// URL y Key proporcionadas explícitamente
+const SUPABASE_URL = 'https://xnzjsogdymsaefjxeeby.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_1ZnmuRAcVix0WWoU4KQ1tg_W0HLLVAr';
 
 let client: SupabaseClient | null = null;
 
-// Verificación robusta
-if (SUPABASE_URL && SUPABASE_KEY && 
-    SUPABASE_URL !== 'undefined' && SUPABASE_KEY !== 'undefined') {
+// Inicialización directa
+if (SUPABASE_URL && SUPABASE_KEY) {
   try {
     client = createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Conexión establecida silenciosamente
   } catch (error) {
-    console.error("Error initializing Supabase Client:", error);
+    console.error("Error crítico inicializando Supabase:", error);
     client = null;
   }
-} else {
-  // Mensaje de depuración claro para el navegador
-  console.warn('Modo Offline activado. Estado de variables:', {
-    hasUrl: !!SUPABASE_URL,
-    hasKey: !!SUPABASE_KEY,
-    urlLength: SUPABASE_URL?.length
-  });
 }
 
 export const supabase = client;
