@@ -3,28 +3,30 @@ import react from '@vitejs/plugin-react';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // Carga las variables de entorno desde el archivo .env (si existe)
-  // En producción (Vercel/Netlify), estas variables se inyectan desde el panel de control,
-  // por lo que 'loadEnv' devolverá un objeto con esas claves aunque no exista el archivo .env.local
+  // 1. Cargar variables desde archivos .env (para desarrollo local)
   const env = loadEnv(mode, (process as any).cwd(), '');
+
+  // 2. Definir valores priorizando el entorno del sistema (Vercel) sobre el archivo .env
+  // 'process.env.NOMBRE' tiene el valor real en Vercel.
+  // 'env.NOMBRE' tiene el valor del archivo .env (que no existe en Vercel).
+  const apiKey = process.env.API_KEY || env.API_KEY || '';
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || env.VITE_SUPABASE_URL || '';
+  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY || '';
 
   return {
     plugins: [react()],
-    // IMPORTANTE: Usar '/' en lugar de './' para producción en Vercel/Netlify/Firebase
-    // Esto asegura que los assets se carguen desde la raíz del dominio, evitando errores 404 en subrutas.
+    // IMPORTANTE: Usar '/' para producción
     base: '/', 
     build: {
-      outDir: 'dist', // Ensure explicit output directory
+      outDir: 'dist',
     },
     define: {
-      // Polyfill seguro para process.env.
-      // 1. Definimos 'process.env' como un objeto vacío para evitar "ReferenceError: process is not defined"
+      // Polyfill seguro para process.env
       'process.env': {},
-      // 2. Reemplazamos explícitamente las variables que necesitamos.
-      // JSON.stringify asegura que el valor se inserte como un string literal en el bundle final.
-      'process.env.API_KEY': JSON.stringify(env.API_KEY || ''),
-      'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || ''),
-      'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || ''),
+      // Inyectamos los valores resueltos explícitamente como strings JSON
+      'process.env.API_KEY': JSON.stringify(apiKey),
+      'process.env.VITE_SUPABASE_URL': JSON.stringify(supabaseUrl),
+      'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(supabaseKey),
     }
   };
 });

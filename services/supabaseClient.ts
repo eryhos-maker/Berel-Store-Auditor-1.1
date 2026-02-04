@@ -1,17 +1,15 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Usamos process.env que está siendo reemplazado por Vite en tiempo de compilación.
-// Es crucial acceder a la propiedad específica (ej. process.env.VITE_SUPABASE_URL)
-// para que el mecanismo de 'define' de Vite funcione correctamente.
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY;
+// Agregamos .trim() para limpiar espacios accidentales al copiar/pegar las llaves.
+const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || '').trim();
+const SUPABASE_KEY = (process.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
 let client: SupabaseClient | null = null;
 
-// Verificación robusta: Aseguramos que las variables sean strings y no estén vacías
-if (typeof SUPABASE_URL === 'string' && SUPABASE_URL.length > 0 && 
-    typeof SUPABASE_KEY === 'string' && SUPABASE_KEY.length > 0 &&
-    SUPABASE_KEY !== 'undefined') {
+// Verificación robusta
+if (SUPABASE_URL && SUPABASE_KEY && 
+    SUPABASE_URL !== 'undefined' && SUPABASE_KEY !== 'undefined') {
   try {
     client = createClient(SUPABASE_URL, SUPABASE_KEY);
   } catch (error) {
@@ -19,9 +17,12 @@ if (typeof SUPABASE_URL === 'string' && SUPABASE_URL.length > 0 &&
     client = null;
   }
 } else {
-  // Solo advertimos en consola, no detenemos la app. 
-  // La app funcionará en modo "Offline" usando los datos mockeados en constants.ts
-  console.log('Modo Offline: Supabase URL o Key no configurados.');
+  // Mensaje de depuración claro para el navegador
+  console.warn('Modo Offline activado. Estado de variables:', {
+    hasUrl: !!SUPABASE_URL,
+    hasKey: !!SUPABASE_KEY,
+    urlLength: SUPABASE_URL?.length
+  });
 }
 
 export const supabase = client;
