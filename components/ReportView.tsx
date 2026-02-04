@@ -12,6 +12,21 @@ interface ReportViewProps {
   onClose: () => void;
 }
 
+// Internal Tooltip Component for UX improvement
+const SimpleTooltip = ({ message, children }: { message: string, children?: React.ReactNode }) => {
+  return (
+    <div className="group relative flex flex-col items-center">
+      {children}
+      <div className="absolute bottom-full mb-2 hidden flex-col items-center group-hover:flex z-50">
+        <span className="relative z-10 p-2 text-xs leading-tight text-white bg-gray-900 shadow-xl rounded-md w-48 text-center border border-gray-700">
+          {message}
+        </span>
+        <div className="w-3 h-3 -mt-2 rotate-45 bg-gray-900 border-b border-r border-gray-700"></div>
+      </div>
+    </div>
+  );
+};
+
 const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
   const [loadingAI, setLoadingAI] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
@@ -119,12 +134,14 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
         
         <div className="flex flex-wrap gap-2 justify-end w-full md:w-auto">
           {!aiPlan && !loadingAI && (
-             <button 
-               onClick={handleGeneratePlan}
-               className="flex items-center gap-2 bg-blue-900 text-white px-4 py-2 rounded shadow text-sm hover:bg-blue-800 transition-colors"
-             >
-               ✨ Generar Plan IA
-             </button>
+             <SimpleTooltip message="La IA analizará los hallazgos críticos de la auditoría y redactará automáticamente un plan de acción correctivo.">
+               <button 
+                 onClick={handleGeneratePlan}
+                 className="flex items-center gap-2 bg-blue-900 text-white px-4 py-2 rounded shadow text-sm hover:bg-blue-800 transition-colors"
+               >
+                 ✨ Generar Plan IA
+               </button>
+             </SimpleTooltip>
           )}
 
           <button 
