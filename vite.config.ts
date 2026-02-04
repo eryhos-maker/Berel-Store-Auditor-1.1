@@ -18,6 +18,18 @@ export default defineConfig(({ mode }) => {
     base: '/', 
     build: {
       outDir: 'dist',
+      // Aumentamos el límite de advertencia a 1000kB (1MB) para silenciar la alerta de 500kB
+      chunkSizeWarningLimit: 1000, 
+      rollupOptions: {
+        output: {
+          // Dividimos las librerías pesadas en archivos separados para mejorar la carga
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom'],
+            'supabase-sdk': ['@supabase/supabase-js'],
+            'google-genai': ['@google/genai']
+          }
+        }
+      }
     },
     define: {
       'process.env': {},
