@@ -2,14 +2,55 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Berel Auditor</title>
+    
+    <!-- Preconnect to critical domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            animation: {
+              'fade-in': 'fadeIn 0.3s ease-out',
+              'fade-in-up': 'fadeInUp 0.4s ease-out',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              fadeInUp: {
+                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+            }
+          }
+        }
+      }
+    </script>
+    
+    <!-- Defer heavy non-critical scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+    
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
       body {
         font-family: 'Inter', sans-serif;
+        -webkit-tap-highlight-color: transparent; /* Mobile optimization */
+      }
+      /* Hide scrollbar for Chrome, Safari and Opera */
+      .no-scrollbar::-webkit-scrollbar {
+          display: none;
+      }
+      /* Hide scrollbar for IE, Edge and Firefox */
+      .no-scrollbar {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
       }
       @media print {
         body { -webkit-print-color-adjust: exact; }
@@ -34,6 +75,8 @@
     <script>
       window.onerror = function(message, source, lineno, colno, error) {
         if (!source && !lineno) return; 
+        // Ignore resizeobserver loop errors commonly found in testing environments
+        if (message.includes('ResizeObserver')) return;
         
         document.body.innerHTML = 
           '<div style="padding: 20px; font-family: sans-serif; background: #fee2e2; color: #991b1b; height: 100vh; overflow: auto;">' +

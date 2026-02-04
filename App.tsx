@@ -1,18 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { AuditRecord } from './types';
-import AuditForm from './components/AuditForm';
-import ReportView from './components/ReportView';
-import AdminConsole from './components/AdminConsole';
 import { StorageService } from './services/storageService';
 
+// Lazy Load components to reduce initial bundle size on mobile
+const AuditForm = lazy(() => import('./components/AuditForm'));
+const ReportView = lazy(() => import('./components/ReportView'));
+const AdminConsole = lazy(() => import('./components/AdminConsole'));
+
 type ViewState = 'HOME' | 'AUDIT' | 'REPORT' | 'ADMIN';
+
+// Internal Loading Component for Suspense
+const LoadingSpinner = () => (
+  <div className="flex flex-col items-center justify-center min-h-[50vh] w-full p-4">
+    <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-900 rounded-full animate-spin mb-4"></div>
+    <p className="text-gray-500 font-medium text-sm animate-pulse">Cargando módulo...</p>
+  </div>
+);
 
 // Tooltip Component for UX improvement
 const SimpleTooltip = ({ message, children }: { message: string, children?: React.ReactNode }) => {
   return (
     <div className="group relative flex flex-col items-center w-full">
       {children}
-      <div className="absolute bottom-full mb-2 hidden flex-col items-center group-hover:flex z-50 w-64">
+      <div className="absolute bottom-full mb-2 hidden flex-col items-center group-hover:flex z-50 w-64 pointer-events-none">
         <span className="relative z-10 p-2 text-xs leading-tight text-white bg-gray-900 shadow-xl rounded-md text-center border border-gray-700">
           {message}
         </span>
@@ -61,7 +71,7 @@ const App: React.FC = () => {
       <div className="h-2 w-full bg-gradient-to-r from-yellow-400 via-red-600 to-blue-900 sticky top-0 z-50"></div>
 
       {view === 'HOME' && (
-        <div className="flex flex-col items-center justify-center flex-grow px-4 bg-white">
+        <div className="flex flex-col items-center justify-center flex-grow px-4 bg-white animate-fade-in">
           <div className="max-w-md w-full text-center">
             {/* Logo Image */}
             <div className="mb-8 flex justify-center">
@@ -70,7 +80,6 @@ const App: React.FC = () => {
                 alt="Berel" 
                 className="h-24 object-contain"
                 onError={(e) => {
-                  // Fallback if image fails to load
                   e.currentTarget.style.display = 'none';
                   const parent = e.currentTarget.parentElement;
                   if (parent) {
@@ -89,12 +98,12 @@ const App: React.FC = () => {
             <div className="space-y-4">
               <button 
                 onClick={startAudit}
-                className="w-full bg-red-600 text-white text-lg font-bold py-4 rounded-xl shadow-lg transform transition hover:scale-105 hover:bg-red-700 flex items-center justify-center"
+                className="w-full bg-red-600 text-white text-lg font-bold py-4 rounded-xl shadow-lg transform transition hover:scale-105 hover:bg-red-700 active:scale-95 flex items-center justify-center"
               >
                 <span className="mr-3 text-2xl">📋</span> Iniciar Nueva Auditoría
               </button>
               
-              <SimpleTooltip message="Panel para administradores: Consulta el historial de auditorías, exporta reportes a CSV y administra el catálogo de tiendas y personal.">
+              <SimpleTooltip message="Panel para administradores: Consulta el historial de auditorías, exporta reportes a CSV y administra el catálogo.">
                 <button 
                   onClick={handleOpenAdmin}
                   className="w-full bg-white text-blue-900 font-semibold py-3 rounded-xl hover:bg-blue-50 transition border-2 border-blue-900"
@@ -106,43 +115,50 @@ const App: React.FC = () => {
 
             <div className="mt-12 text-center">
                <p className="text-xs text-gray-400 uppercase tracking-widest">Pinta con confianza</p>
-               <p className="text-[10px] text-gray-300 mt-1">v1.0.0 | Berel Retail</p>
+               <p className="text-[10px] text-gray-300 mt-1">v1.1.0 | Berel Retail | Mobile Optimized</p>
             </div>
           </div>
         </div>
       )}
 
-      {view === 'AUDIT' && (
-        <div className="min-h-screen bg-gray-50 w-full">
-           <header className="bg-white border-b border-gray-200 p-4 sticky top-2 z-40 shadow-sm flex justify-between items-center">
-             <div className="flex items-center gap-2">
-               <img src="https://www.berel.com.mx/sites/default/files/logo_berel_0.png" alt="Logo" className="h-8" />
-               <h1 className="font-bold text-blue-900 border-l-2 border-gray-300 pl-3 ml-1 text-sm md:text-base">Nueva Auditoría</h1>
+      {/* Main Content Area with Suspense for Lazy Loading */}
+      <Suspense fallback={<LoadingSpinner />}>
+        {view === 'AUDIT' && (
+          <div className="min-h-screen bg-gray-50 w-full animate-fade-in-up">
+             <header className="bg-white border-b border-gray-200 p-4 sticky top-2 z-40 shadow-sm flex justify-between items-center rounded-b-lg mx-2">
+               <div className="flex items-center gap-2">
+                 <img src="https://www.berel.com.mx/sites/default/files/logo_berel_0.png" alt="Logo" className="h-6" />
+                 <h1 className="font-bold text-blue-900 border-l-2 border-gray-300 pl-3 ml-1 text-sm md:text-base">Nueva Auditoría</h1>
+               </div>
+               <button onClick={() => setView('HOME')} className="text-xs text-gray-500 hover:text-red-600 font-medium px-2 py-1">Cancelar</button>
+             </header>
+             <div className="p-2 md:p-4">
+              <AuditForm 
+                onFinish={handleFinishAudit} 
+                onCancel={() => setView('HOME')} 
+              />
              </div>
-             <button onClick={() => setView('HOME')} className="text-xs text-gray-500 hover:text-red-600 font-medium">Cancelar</button>
-           </header>
-           <div className="p-4">
-            <AuditForm 
-              onFinish={handleFinishAudit} 
-              onCancel={() => setView('HOME')} 
+          </div>
+        )}
+
+        {view === 'REPORT' && currentAudit && (
+          <div className="animate-fade-in">
+            <ReportView 
+              audit={currentAudit} 
+              onClose={() => setView(previousView)} 
             />
-           </div>
-        </div>
-      )}
+          </div>
+        )}
 
-      {view === 'REPORT' && currentAudit && (
-        <ReportView 
-          audit={currentAudit} 
-          onClose={() => setView(previousView)} 
-        />
-      )}
-
-      {view === 'ADMIN' && (
-        <AdminConsole 
-          onBack={() => setView('HOME')} 
-          onViewAudit={handleViewAuditFromAdmin} 
-        />
-      )}
+        {view === 'ADMIN' && (
+          <div className="animate-fade-in">
+            <AdminConsole 
+              onBack={() => setView('HOME')} 
+              onViewAudit={handleViewAuditFromAdmin} 
+            />
+          </div>
+        )}
+      </Suspense>
     </div>
   );
 };

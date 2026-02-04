@@ -18,11 +18,12 @@ export default defineConfig(({ mode }) => {
     base: '/', 
     build: {
       outDir: 'dist',
-      // Aumentamos el límite de advertencia a 1000kB (1MB) para silenciar la alerta de 500kB
+      // Optimización: Elimina logs en producción para limpiar la app
+      minify: 'esbuild',
+      target: 'esnext',
       chunkSizeWarningLimit: 1000, 
       rollupOptions: {
         output: {
-          // Dividimos las librerías pesadas en archivos separados para mejorar la carga
           manualChunks: {
             'react-vendor': ['react', 'react-dom'],
             'supabase-sdk': ['@supabase/supabase-js'],
@@ -30,6 +31,10 @@ export default defineConfig(({ mode }) => {
           }
         }
       }
+    },
+    esbuild: {
+      // Elimina console.log y debugger solo en build de producción
+      drop: mode === 'production' ? ['console', 'debugger'] : [],
     },
     define: {
       'process.env': {},
