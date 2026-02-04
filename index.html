@@ -15,16 +15,16 @@
         body { -webkit-print-color-adjust: exact; }
       }
     </style>
-  <script type="importmap">
+<script type="importmap">
 {
   "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.39.0",
+    "react/": "https://esm.sh/react@^19.2.4/",
     "react": "https://esm.sh/react@^19.2.4",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.39.0",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.93.3",
     "vite": "https://esm.sh/vite@^7.3.1",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.3"
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.3",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.94.0"
   }
 }
 </script>
@@ -33,6 +33,9 @@
     <!-- Global Error Handler Script: Captures errors before React loads -->
     <script>
       window.onerror = function(message, source, lineno, colno, error) {
+        // Ignorar errores de red de scripts de terceros (como extensiones de navegador)
+        if (!source && !lineno) return; 
+        
         document.body.innerHTML = 
           '<div style="padding: 20px; font-family: sans-serif; background: #fee2e2; color: #991b1b; height: 100vh; overflow: auto;">' +
           '<h1 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">Error de Inicialización</h1>' +
@@ -45,26 +48,6 @@
           '<button onclick="window.location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #b91c1c; color: white; border: none; border-radius: 0.25rem; cursor: pointer;">Recargar</button>' +
           '</div>';
       };
-
-      window.addEventListener('unhandledrejection', function(event) {
-        // Prevent default console error logging if we are handling it
-        // event.preventDefault();
-        const reason = event.reason && (event.reason.message || event.reason) || 'Unknown Promise Error';
-        const stack = event.reason && event.reason.stack ? event.reason.stack : '';
-        
-        // Only override if the root is empty (meaning React hasn't rendered)
-        if (!document.getElementById('root').hasChildNodes()) {
-           document.body.innerHTML = 
-            '<div style="padding: 20px; font-family: sans-serif; background: #fee2e2; color: #991b1b; height: 100vh; overflow: auto;">' +
-            '<h1 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">Error de Promesa (Unhandled Rejection)</h1>' +
-            '<p style="margin-bottom: 0.5rem;">Ocurrió un error asíncrono:</p>' +
-            '<pre style="background: white; padding: 1rem; border-radius: 0.5rem; border: 1px solid #ef4444; overflow: auto; font-size: 0.875rem; white-space: pre-wrap;">' +
-            reason + '\n\n' + stack +
-            '</pre>' +
-            '<button onclick="window.location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #b91c1c; color: white; border: none; border-radius: 0.25rem; cursor: pointer;">Recargar</button>' +
-            '</div>';
-        }
-      });
     </script>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>

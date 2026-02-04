@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    base: '/', // Asegura rutas absolutas para SPA
     define: {
       // Polyfill process.env.API_KEY for the Google GenAI SDK
       // This allows 'process.env.API_KEY' usage in the browser code
