@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AuditRecord, AuditItem } from '../types';
 import { StorageService } from '../services/storageService';
-import { AUDIT_SECTIONS } from '../constants';
+import { AUDIT_SECTIONS, BEREL_LOGO_URL } from '../constants';
 
 // Declare html2pdf since it is loaded via script tag
 declare var html2pdf: any;
@@ -163,7 +163,7 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
         <div className="flex justify-between items-center border-b-2 border-red-600 pb-2 mb-3 shrink-0">
           <div className="flex items-center gap-3">
              <img 
-               src="https://www.berel.com.mx/sites/default/files/logo_berel_0.png" 
+               src={BEREL_LOGO_URL}
                alt="Berel" 
                className="h-10 object-contain"
                onError={(e) => { e.currentTarget.style.display='none' }}

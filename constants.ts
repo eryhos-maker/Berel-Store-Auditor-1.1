@@ -1,5 +1,7 @@
 import { Section, Store, Person } from './types';
 
+export const BEREL_LOGO_URL = "https://www.berel.com.mx/sites/default/files/logo_berel_0.png";
+
 // Initial Mock Data
 export const INITIAL_STORES: Store[] = [
   { id: '1', name: 'Berel Centro', branch: 'S-001', warehouse: 'ALM-CENTRO' },

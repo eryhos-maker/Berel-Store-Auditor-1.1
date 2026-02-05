@@ -1,6 +1,7 @@
 import React, { useState, Suspense, lazy } from 'react';
 import { AuditRecord } from './types';
 import { StorageService } from './services/storageService';
+import { BEREL_LOGO_URL } from './constants';
 
 // Lazy Load components to reduce initial bundle size on mobile
 const AuditForm = lazy(() => import('./components/AuditForm'));
@@ -76,7 +77,7 @@ const App: React.FC = () => {
             {/* Logo Image */}
             <div className="mb-8 flex justify-center">
               <img 
-                src="https://www.berel.com.mx/sites/default/files/logo_berel_0.png" 
+                src={BEREL_LOGO_URL}
                 alt="Berel" 
                 className="h-24 object-contain"
                 onError={(e) => {
@@ -127,7 +128,7 @@ const App: React.FC = () => {
           <div className="min-h-screen bg-gray-50 w-full animate-fade-in-up">
              <header className="bg-white border-b border-gray-200 p-4 sticky top-2 z-40 shadow-sm flex justify-between items-center rounded-b-lg mx-2">
                <div className="flex items-center gap-2">
-                 <img src="https://www.berel.com.mx/sites/default/files/logo_berel_0.png" alt="Logo" className="h-6" />
+                 <img src={BEREL_LOGO_URL} alt="Logo" className="h-6" />
                  <h1 className="font-bold text-blue-900 border-l-2 border-gray-300 pl-3 ml-1 text-sm md:text-base">Nueva Auditoría</h1>
                </div>
                <button onClick={() => setView('HOME')} className="text-xs text-gray-500 hover:text-red-600 font-medium px-2 py-1">Cancelar</button>
