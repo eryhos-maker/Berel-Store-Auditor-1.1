@@ -29,3 +29,4 @@ apps-script/zz-*.gs
 .vercel
 .env*
 !.env.example
+exportacion-supabase/
