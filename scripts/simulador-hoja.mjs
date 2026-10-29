@@ -67,6 +67,7 @@ function Hoja(nombre) {
         setNumberFormat: f => { recorrer((i, j) => { datos().formatos[`${i},${j}`] = f; }); return rango; },
         setFontWeight: () => rango,
         setFontColor: () => rango,
+        getDisplayValue: () => String(celda(r - 1, c - 1)),
         setValue: v => rango.setValues([[v]]),
         // Las fórmulas no se calculan en el simulador: se guarda el texto para revisarlo.
         setFormula: f => { poner(r - 1, c - 1, f); return rango; },

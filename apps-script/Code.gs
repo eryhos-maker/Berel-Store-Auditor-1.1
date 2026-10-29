@@ -215,6 +215,7 @@ function borrarAuditoriaBerel_(id) {
 // ---------------------------------------------------------------- Supervisión de Mueble · Ferre Mina
 
 function catalogosMueble_() {
+  resumenMensual_(false); // la crea si no existe
   var hoy = Utilities.formatDate(new Date(), ZONA, 'yyyy-MM-dd');
   var semana = lunes_(hoy);
   // Muebles ya auditados esta semana (cada mueble se audita 1 vez por semana).
@@ -359,7 +360,7 @@ function leerAuditoriasMueble_() {
 function resumenMensual_(rehacer) {
   var libro = SpreadsheetApp.getActiveSpreadsheet();
   var h = libro.getSheetByName('Resumen_Mensual');
-  if (h && !rehacer) return;
+  if (h && !rehacer && h.getRange('A4').getDisplayValue() !== '#ERROR!') return;
   if (!h) h = libro.insertSheet('Resumen_Mensual');
   var enc = encabezadosDe_(hoja_('MM_Auditorias'));
   var col = function (nombre) {
@@ -379,7 +380,14 @@ function resumenMensual_(rehacer) {
   h.getRange('A1').setValue('Supervisión de Mueble · promedio mensual por vendedor titular').setFontWeight('bold');
   h.getRange('A2').setValue('Se actualiza solo con cada auditoría. Puntos tarjeta = promedio × 0.5 (la tarjeta mensual vale 50 pts). No escribir en esta pestaña.')
     .setFontColor('#666666');
-  h.getRange('A4').setFormula('=QUERY({MM_Auditorias!A1:' + columnaLetra_(enc.length) + '}, "' + consulta + '", 1)');
+  // El separador de argumentos depende de la configuración regional de la hoja (coma o punto y coma):
+  // se prueba con coma y, si Sheets no la entiende, con punto y coma.
+  var celda = h.getRange('A4');
+  [',', ';'].some(function (sep) {
+    celda.setFormula('=QUERY({MM_Auditorias!A1:' + columnaLetra_(enc.length) + '}' + sep + ' "' + consulta + '"' + sep + ' 1)');
+    SpreadsheetApp.flush();
+    return celda.getDisplayValue() !== '#ERROR!';
+  });
   h.getRange('A4:G4').setFontWeight('bold');
   h.setFrozenRows(4);
 }
