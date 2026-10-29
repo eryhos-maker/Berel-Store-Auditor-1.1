@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AuditRecord, AuditItem } from '../types';
-import { StorageService } from '../services/storageService';
+import ImagenDrive from './ImagenDrive';
 import { AUDIT_SECTIONS, BEREL_LOGO_URL } from '../constants';
 
 // Declare html2pdf since it is loaded via script tag
@@ -282,7 +282,7 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
             <div className="text-center flex flex-col items-center">
               <div className="h-16 w-full flex items-end justify-center mb-1">
                 {audit.managerSignature ? (
-                  <img src={audit.managerSignature} alt="Firma Gerente" className="max-h-16 max-w-full object-contain" />
+                  <ImagenDrive src={audit.managerSignature} alt="Firma Gerente" className="max-h-16 max-w-full object-contain" />
                 ) : (
                   <div className="w-full border-b border-gray-400"></div>
                 )}
@@ -294,7 +294,7 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
             <div className="text-center flex flex-col items-center">
               <div className="h-16 w-full flex items-end justify-center mb-1">
                 {audit.auditorSignature ? (
-                   <img src={audit.auditorSignature} alt="Firma Auditor" className="max-h-16 max-w-full object-contain" />
+                   <ImagenDrive src={audit.auditorSignature} alt="Firma Auditor" className="max-h-16 max-w-full object-contain" />
                 ) : (
                    <div className="w-full border-b border-gray-400"></div>
                 )}

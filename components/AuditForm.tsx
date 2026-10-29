@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { AUDIT_SECTIONS } from '../constants';
 import { Store, Person, AuditRecord, AuditItem } from '../types';
-import { StorageService } from '../services/storageService';
+import { SheetsService } from '../services/sheetsService';
 import SignaturePad from './SignaturePad';
 
 interface AuditFormProps {
@@ -15,7 +15,8 @@ const AuditForm: React.FC<AuditFormProps> = ({ onFinish, onCancel }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Header State
-  const [folio, setFolio] = useState('');
+  // Identificador fijo de esta captura: si se reintenta el guardado, la hoja no la duplica.
+  const [auditId] = useState(() => crypto.randomUUID());
   const [selectedStore, setSelectedStore] = useState('');
   const [selectedManager, setSelectedManager] = useState('');
   const [selectedAuditor, setSelectedAuditor] = useState('');
@@ -33,25 +34,14 @@ const AuditForm: React.FC<AuditFormProps> = ({ onFinish, onCancel }) => {
   const [managerSignature, setManagerSignature] = useState<string>('');
   const [auditorSignature, setAuditorSignature] = useState<string>('');
 
-  const generateFolio = () => {
-    const now = new Date();
-    const dateStr = now.getFullYear().toString() +
-      (now.getMonth() + 1).toString().padStart(2, '0') +
-      now.getDate().toString().padStart(2, '0');
-    // Generate 4 random digits
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000).toString();
-    return `AB-${dateStr}-${randomSuffix}`;
-  };
-
   useEffect(() => {
     const loadMasterData = async () => {
-      const s = await StorageService.getStores();
-      const p = await StorageService.getPeople();
+      const s = await SheetsService.getStores();
+      const p = await SheetsService.getPeople();
       setStores(s);
       setPeople(p);
     };
     loadMasterData();
-    setFolio(generateFolio());
   }, []);
 
   // --- Derived State for Progress & Validation ---
@@ -184,8 +174,8 @@ const AuditForm: React.FC<AuditFormProps> = ({ onFinish, onCancel }) => {
     const auditorName = people.find(p => p.id === selectedAuditor)?.name || '';
 
     const newAudit: AuditRecord = {
-      id: '',
-      folio: folio,
+      id: auditId,
+      folio: '', // Lo asigna la hoja al guardar
       storeName,
       managerName,
       auditorName,
@@ -240,8 +230,8 @@ const AuditForm: React.FC<AuditFormProps> = ({ onFinish, onCancel }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <label className="block text-xs uppercase font-bold text-gray-500">Folio</label>
-            <div className="mt-1 block w-full rounded-md border-gray-300 bg-blue-50 p-2 border font-mono font-bold text-blue-900 tracking-wider">
-              {folio}
+            <div className="mt-1 block w-full rounded-md border-gray-300 bg-blue-50 p-2 border text-sm text-blue-900">
+              Se asigna al guardar
             </div>
           </div>
           <div>

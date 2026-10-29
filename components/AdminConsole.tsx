@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AuditRecord, Store, Person } from '../types';
-import { StorageService } from '../services/storageService';
+import { SheetsService } from '../services/sheetsService';
 import { AUDIT_SECTIONS } from '../constants';
 
 interface AdminConsoleProps {
@@ -44,7 +44,7 @@ const AdminConsole: React.FC<AdminConsoleProps> = ({ onBack, onViewAudit }) => {
 
   const loadData = async () => {
     setLoading(true);
-    const audits = await StorageService.getAudits();
+    const audits = await SheetsService.getAudits();
     setHistory(audits);
     setLoading(false);
   };
@@ -64,7 +64,7 @@ const AdminConsole: React.FC<AdminConsoleProps> = ({ onBack, onViewAudit }) => {
 
   const executeDelete = async () => {
     if (auditToDelete) {
-      await StorageService.deleteAudit(auditToDelete);
+      await SheetsService.deleteAudit(auditToDelete);
       setAuditToDelete(null);
       loadData();
     }
@@ -182,7 +182,7 @@ const AdminConsole: React.FC<AdminConsoleProps> = ({ onBack, onViewAudit }) => {
 
   const handleAddStore = async () => {
     if (newStoreName && newStoreBranch && newStoreWarehouse) {
-      await StorageService.addStore({ 
+      await SheetsService.addStore({ 
         id: crypto.randomUUID(), 
         name: newStoreName,
         branch: newStoreBranch,
@@ -199,7 +199,7 @@ const AdminConsole: React.FC<AdminConsoleProps> = ({ onBack, onViewAudit }) => {
 
   const handleAddPerson = async () => {
     if (newPersonName && newPersonPayrollId && newPersonDepartment) {
-      await StorageService.addPerson({ 
+      await SheetsService.addPerson({ 
         id: crypto.randomUUID(), 
         name: newPersonName, 
         role: newPersonRole,

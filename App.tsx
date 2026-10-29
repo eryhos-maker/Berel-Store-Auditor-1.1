@@ -1,6 +1,6 @@
 import React, { useState, Suspense, lazy } from 'react';
 import { AuditRecord } from './types';
-import { StorageService } from './services/storageService';
+import { SheetsService } from './services/sheetsService';
 import { BEREL_LOGO_URL } from './constants';
 
 // Lazy Load components to reduce initial bundle size on mobile
@@ -45,7 +45,7 @@ const App: React.FC = () => {
   const handleFinishAudit = async (audit: AuditRecord) => {
     try {
       // Guardamos y obtenemos el registro actualizado (con ID real de DB)
-      const savedAudit = await StorageService.saveAudit(audit);
+      const savedAudit = await SheetsService.saveAudit(audit);
       setCurrentAudit(savedAudit);
       setPreviousView('HOME');
       setView('REPORT');
