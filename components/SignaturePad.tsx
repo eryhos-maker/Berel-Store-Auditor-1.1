@@ -108,12 +108,12 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ title, onSave, onCancel }) 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4 animate-fade-in">
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-md flex flex-col">
-        <div className="p-4 border-b border-gray-200 bg-gray-50 rounded-t-lg">
-          <h3 className="text-lg font-bold text-gray-800 text-center">{title}</h3>
-          <p className="text-xs text-center text-gray-500 mt-1">Firme dentro del recuadro</p>
+        <div className="p-4 border-b border-fdn-line bg-fdn-bg rounded-t-lg">
+          <h3 className="text-lg font-bold text-fdn-fg text-center">{title}</h3>
+          <p className="text-xs text-center text-fdn-muted mt-1">Firme dentro del recuadro</p>
         </div>
         
-        <div className="p-4 bg-gray-200 flex justify-center">
+        <div className="p-4 bg-fdn-surface-2 flex justify-center">
           <canvas
             ref={canvasRef}
             className="bg-white rounded shadow-inner cursor-crosshair touch-none"
@@ -128,24 +128,24 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ title, onSave, onCancel }) 
           />
         </div>
 
-        <div className="p-4 flex gap-3 justify-end border-t border-gray-100">
+        <div className="p-4 flex gap-3 justify-end border-t border-fdn-line">
            <button
             onClick={handleClear}
-            className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded transition-colors"
+            className="px-4 py-2 text-sm font-medium text-fdn-red-ink bg-red-50 hover:bg-red-100 rounded transition-colors"
           >
             Borrar
           </button>
           <div className="flex-1"></div>
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded transition-colors"
+            className="px-4 py-2 text-sm font-medium text-fdn-muted hover:bg-fdn-bg rounded transition-colors"
           >
             Cancelar
           </button>
           <button
             onClick={handleSave}
             disabled={!hasSignature}
-            className={`px-6 py-2 text-sm font-bold text-white rounded shadow transition-colors ${!hasSignature ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-900 hover:bg-blue-800'}`}
+            className={`px-6 py-2 text-sm font-bold text-white rounded shadow transition-colors ${!hasSignature ? 'bg-gray-400 cursor-not-allowed' : 'bg-fdn-blue hover:bg-fdn-blue-2'}`}
           >
             Confirmar Firma
           </button>

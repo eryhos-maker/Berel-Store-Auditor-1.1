@@ -150,26 +150,26 @@ const ConsolaMueble: React.FC = () => {
   if (abierta) return <ReporteMueble auditoria={abierta} onClose={() => setAbierta(null)} textoCerrar="Volver a la consola" />;
   if (error) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow text-center">
+      <div className="bg-white p-6 text-center rounded-2xl border border-fdn-line shadow-fdn">
         <p className="text-red-700 font-semibold mb-3">{error}</p>
-        <button onClick={cargar} className="bg-blue-900 text-white px-4 py-2 rounded">Reintentar</button>
+        <button onClick={cargar} className="bg-fdn-blue text-white px-4 py-2 rounded">Reintentar</button>
       </div>
     );
   }
-  if (!auditorias || !cat) return <p className="text-center text-gray-500 py-10 animate-pulse">Cargando supervisiones de mueble…</p>;
+  if (!auditorias || !cat) return <p className="text-center text-fdn-muted py-10 animate-pulse">Cargando supervisiones de mueble…</p>;
 
-  const campo = 'block w-full rounded-md border border-gray-300 p-2 text-sm bg-gray-50';
-  const titulo = 'text-sm font-bold text-blue-900 uppercase tracking-wide';
+  const campo = 'block w-full rounded-md border border-fdn-campo p-2 text-sm bg-fdn-bg';
+  const titulo = 'text-sm font-bold text-fdn-blue-ink uppercase tracking-wide';
 
   return (
     <div className="space-y-6">
       {/* Avance de la semana */}
-      <section className="bg-white p-4 rounded-lg shadow border border-gray-200">
+      <section className="bg-white p-4 rounded-2xl border border-fdn-line shadow-fdn">
         <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
           <h3 className={titulo}>Avance · {nombreSemana(semanaAvance)}</h3>
-          <span className="text-sm font-semibold text-gray-700">{auditados} de {avance.length} muebles auditados</span>
+          <span className="text-sm font-semibold text-fdn-fg">{auditados} de {avance.length} muebles auditados</span>
         </div>
-        <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-3">
+        <div className="h-2 bg-fdn-surface-2 rounded-full overflow-hidden mb-3">
           <div className="h-2 bg-green-600" style={{ width: `${avance.length ? (auditados / avance.length) * 100 : 0}%` }} />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
@@ -179,11 +179,11 @@ const ConsolaMueble: React.FC = () => {
               type="button"
               disabled={!a}
               onClick={() => a && setAbierta(a)}
-              className={`text-left rounded-lg border p-2 text-xs ${a ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'}`}
+              className={`text-left rounded-lg border p-2 text-xs ${a ? 'border-fdn-line bg-fdn-ok-bg' : 'border-fdn-line bg-fdn-warn-bg'}`}
             >
-              <p className="font-bold text-gray-900">{m.numero} {a ? '✓' : ''}</p>
-              <p className="text-gray-600 truncate">{m.titular}</p>
-              <p className={a ? 'text-green-800' : 'text-orange-800 font-semibold'}>
+              <p className="font-bold text-fdn-fg">{m.numero} {a ? '✓' : ''}</p>
+              <p className="text-fdn-muted truncate">{m.titular}</p>
+              <p className={a ? 'text-fdn-ok font-semibold' : 'text-fdn-warn font-semibold'}>
                 {a ? `${a.calificacion.calificacion} · ${a.auditor}` : `Pendiente · audita ${m.supervisorAudita || '—'}`}
               </p>
             </button>
@@ -192,34 +192,34 @@ const ConsolaMueble: React.FC = () => {
       </section>
 
       {/* Historial */}
-      <section className="bg-white p-4 rounded-lg shadow border border-gray-200">
+      <section className="bg-white p-4 rounded-2xl border border-fdn-line shadow-fdn">
         <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
           <h3 className={titulo}>Historial ({filtradas.length})</h3>
           <div className="flex gap-2">
-            <button onClick={cargar} className="text-sm border border-gray-300 px-3 py-1.5 rounded">Actualizar</button>
-            <button onClick={exportarHistorial} className="text-sm bg-blue-900 text-white px-3 py-1.5 rounded">Exportar CSV</button>
+            <button onClick={cargar} className="text-sm border border-fdn-campo px-3 py-1.5 rounded">Actualizar</button>
+            <button onClick={exportarHistorial} className="text-sm bg-fdn-blue text-white px-3 py-1.5 rounded">Exportar CSV</button>
           </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <label className="text-xs text-gray-700">Semana
+          <label className="text-xs text-fdn-fg">Semana
             <select className={campo} value={semana} onChange={e => setSemana(e.target.value)}>
               <option value="">Todas</option>
               {semanas.map(s => <option key={s} value={s}>{nombreSemana(s)}</option>)}
             </select>
           </label>
-          <label className="text-xs text-gray-700">Mueble
+          <label className="text-xs text-fdn-fg">Mueble
             <select className={campo} value={mueble} onChange={e => setMueble(e.target.value)}>
               <option value="">Todos</option>
               {cat.muebles.map(m => <option key={m.numero} value={m.numero}>{m.numero}</option>)}
             </select>
           </label>
-          <label className="text-xs text-gray-700">Vendedor
+          <label className="text-xs text-fdn-fg">Vendedor
             <select className={campo} value={vendedor} onChange={e => setVendedor(e.target.value)}>
               <option value="">Todos</option>
               {cat.vendedores.map(v => <option key={v.nomina} value={v.nombre}>{v.nombre}</option>)}
             </select>
           </label>
-          <label className="text-xs text-gray-700">Auditor
+          <label className="text-xs text-fdn-fg">Auditor
             <select className={campo} value={auditor} onChange={e => setAuditor(e.target.value)}>
               <option value="">Todos</option>
               {cat.auditores.map(a => <option key={a.nomina} value={a.nombre}>{a.nombre}</option>)}
@@ -227,12 +227,12 @@ const ConsolaMueble: React.FC = () => {
           </label>
         </div>
         {filtradas.length === 0 ? (
-          <p className="text-sm text-gray-500 py-6 text-center">No hay supervisiones con esos filtros.</p>
+          <p className="text-sm text-fdn-muted py-6 text-center">No hay supervisiones con esos filtros.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-gray-500 uppercase border-b">
+                <tr className="text-left text-xs text-fdn-muted uppercase border-b">
                   <th className="py-2 pr-3">Folio</th><th className="py-2 pr-3">Fecha</th><th className="py-2 pr-3">Mueble</th>
                   <th className="py-2 pr-3">Titular</th><th className="py-2 pr-3">Atendió</th><th className="py-2 pr-3">Auditor</th>
                   <th className="py-2 pr-3 text-right">Calif.</th><th className="py-2 pr-3">Semáforo</th><th className="py-2" />
@@ -240,55 +240,55 @@ const ConsolaMueble: React.FC = () => {
               </thead>
               <tbody>
                 {filtradas.map(a => (
-                  <tr key={a.id} className="border-b border-gray-100">
-                    <td className="py-2 pr-3 font-mono text-xs text-red-600 font-bold whitespace-nowrap">{a.folio}</td>
+                  <tr key={a.id} className="border-b border-fdn-line">
+                    <td className="py-2 pr-3 font-mono text-xs text-fdn-red-ink font-bold whitespace-nowrap">{a.folio}</td>
                     <td className="py-2 pr-3 whitespace-nowrap">{fechaCorta(a.fecha)}</td>
                     <td className="py-2 pr-3 font-semibold">{a.mueble.numero}</td>
                     <td className="py-2 pr-3">{a.mueble.titular}</td>
                     <td className="py-2 pr-3">{a.atendio}</td>
-                    <td className="py-2 pr-3">{a.auditor}{a.auditorEsSupervisor ? ' ⚠️' : ''}</td>
+                    <td className="py-2 pr-3">{a.auditor}{a.auditorEsSupervisor && <span className="ml-1.5 text-[11.8px] font-bold px-1.5 py-0.5 rounded-md bg-fdn-warn-bg text-fdn-warn">No cruzada</span>}</td>
                     <td className="py-2 pr-3 text-right font-bold">{a.calificacion.calificacion}</td>
                     <td className="py-2 pr-3"><SemaforoChip semaforo={a.calificacion.semaforo} /></td>
-                    <td className="py-2"><button onClick={() => setAbierta(a)} className="text-blue-800 font-semibold">Ver</button></td>
+                    <td className="py-2"><button onClick={() => setAbierta(a)} className="text-fdn-blue font-semibold">Ver</button></td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p className="text-[11px] text-gray-500 mt-2">⚠️ = la auditó el supervisor directo del titular (no cruzada).</p>
+            <p className="text-[11px] text-fdn-muted mt-2">«No cruzada»: la auditó el supervisor directo del titular.</p>
           </div>
         )}
       </section>
 
       {/* Promedio mensual */}
-      <section className="bg-white p-4 rounded-lg shadow border border-gray-200">
+      <section className="bg-white p-4 rounded-2xl border border-fdn-line shadow-fdn">
         <div className="flex flex-wrap justify-between items-end gap-2 mb-3">
           <div>
             <h3 className={titulo}>Promedio mensual por vendedor</h3>
-            <p className="text-xs text-gray-500">La calificación de cada mueble se carga a su titular. Puntos tarjeta = promedio × 0.5 (de 50).</p>
+            <p className="text-xs text-fdn-muted">La calificación de cada mueble se carga a su titular. Puntos tarjeta = promedio × 0.5 (de 50).</p>
           </div>
           <div className="flex gap-2 items-end">
             <select className={campo} value={mes} onChange={e => setMes(e.target.value)}>
               {meses.map(m => <option key={m} value={m}>{nombreMes(m)}</option>)}
             </select>
-            <button onClick={exportarPromedios} className="text-sm bg-blue-900 text-white px-3 py-2 rounded whitespace-nowrap">Exportar CSV</button>
+            <button onClick={exportarPromedios} className="text-sm bg-fdn-blue text-white px-3 py-2 rounded whitespace-nowrap">Exportar CSV</button>
           </div>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-gray-500 uppercase border-b">
+              <tr className="text-left text-xs text-fdn-muted uppercase border-b">
                 <th className="py-2 pr-3">Vendedor</th><th className="py-2 pr-3">Supervisor</th><th className="py-2 pr-3 text-right">Auditorías</th>
                 <th className="py-2 pr-3 text-right">Promedio</th><th className="py-2 pr-3">Semáforo</th><th className="py-2 text-right">Pts tarjeta</th>
               </tr>
             </thead>
             <tbody>
               {promedios.map(p => (
-                <tr key={p.nombre} className="border-b border-gray-100">
+                <tr key={p.nombre} className="border-b border-fdn-line">
                   <td className="py-2 pr-3">{p.nombre}</td>
-                  <td className="py-2 pr-3 text-gray-600">{p.supervisor}</td>
+                  <td className="py-2 pr-3 text-fdn-muted">{p.supervisor}</td>
                   <td className="py-2 pr-3 text-right">{p.auditorias}</td>
                   <td className="py-2 pr-3 text-right font-bold">{p.promedio ?? '—'}</td>
-                  <td className="py-2 pr-3">{p.promedio !== null ? <SemaforoChip semaforo={semaforoDe(p.promedio, false)} /> : <span className="text-xs text-gray-400">Sin auditorías</span>}</td>
+                  <td className="py-2 pr-3">{p.promedio !== null ? <SemaforoChip semaforo={semaforoDe(p.promedio, false)} /> : <span className="text-xs text-fdn-muted">Sin auditorías</span>}</td>
                   <td className="py-2 text-right font-semibold">{p.tarjeta ?? '—'}</td>
                 </tr>
               ))}

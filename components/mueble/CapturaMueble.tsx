@@ -7,6 +7,7 @@ import {
 } from '../../services/calificacionMueble';
 import SignaturePad from '../SignaturePad';
 import { SemaforoChip } from './SemaforoChip';
+import { Icono } from '../marca';
 
 interface Props {
   onGuardado: (a: AuditoriaMueble) => void;
@@ -160,48 +161,48 @@ const CapturaMueble: React.FC<Props> = ({ onGuardado, onCancel }) => {
     return (
       <div className="max-w-md mx-auto p-6 text-center">
         <p className="text-red-700 font-semibold mb-4">{errorCarga}</p>
-        <button onClick={cargar} className="bg-blue-900 text-white font-bold py-3 px-6 rounded-xl">Reintentar</button>
+        <button onClick={cargar} className="bg-fdn-blue text-white font-bold py-3 px-6 rounded-xl">Reintentar</button>
       </div>
     );
   }
-  if (!cat) return <p className="text-center text-gray-500 py-16 animate-pulse">Cargando muebles y vendedores…</p>;
+  if (!cat) return <p className="text-center text-fdn-muted py-16 animate-pulse">Cargando muebles y vendedores…</p>;
 
   const otrosVendedores = cat.vendedores.filter(v => !mismoNombre(v.nombre, mueble?.titular) && !mismoNombre(v.nombre, mueble?.suplente));
   const responsables = Array.from(new Set([...cat.vendedores.map(v => v.nombre), ...cat.auditores.map(a => a.nombre)]));
-  const select = 'mt-1 block w-full rounded-lg border border-gray-300 bg-white p-3 text-base';
+  const select = 'mt-1 block w-full rounded-[10px] border border-fdn-campo bg-white p-3 text-base';
 
   return (
     <div className="max-w-2xl mx-auto pb-32">
       {/* Calificación en vivo */}
-      <div className="sticky top-2 z-30 bg-white/95 backdrop-blur border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm rounded-b-lg">
+      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-fdn-line px-4 py-3 flex items-center justify-between shadow-fdn">
         <div>
-          <p className="text-[11px] uppercase tracking-wide text-gray-500">Calificación</p>
-          <p className="text-2xl font-black text-gray-900 leading-none">
-            {cal.calificacion}<span className="text-sm font-semibold text-gray-500"> / 100</span>
+          <p className="text-[11px] uppercase tracking-wide text-fdn-muted">Calificación</p>
+          <p className="text-2xl font-black text-fdn-fg leading-none">
+            {cal.calificacion}<span className="text-sm font-semibold text-fdn-muted"> / 100</span>
           </p>
-          <p className="text-[11px] text-gray-500 mt-0.5">{cal.obtenidos} de {cal.posibles} pts · {cal.contestados}/13 puntos</p>
+          <p className="text-[11px] text-fdn-muted mt-0.5">{cal.obtenidos} de {cal.posibles} pts · {cal.contestados}/13 puntos</p>
         </div>
         <div className="text-right">
           <SemaforoChip semaforo={cal.semaforo} />
           {cal.criticosFallados.length > 0 && (
-            <p className="text-[11px] text-red-700 font-semibold mt-1">⚠️ Falla crítica: {cal.criticosFallados.join(', ')}</p>
+            <p className="text-[11px] text-red-700 font-semibold mt-1">Falla crítica: {cal.criticosFallados.join(', ')}</p>
           )}
         </div>
       </div>
 
       {/* Datos */}
-      <section className="bg-white mx-2 mt-4 p-4 rounded-xl shadow-sm space-y-4">
-        <h2 className="font-bold text-blue-900">1. ¿Quién audita y qué mueble?</h2>
-        <label className="block text-sm font-medium text-gray-700">Auditor
+      <section className="bg-white mx-2 mt-4 p-4 rounded-2xl border border-fdn-line shadow-fdn space-y-4">
+        <h2 className="text-[12.8px] uppercase tracking-[.09em] font-extrabold text-fdn-blue-ink">1. ¿Quién audita y qué mueble?</h2>
+        <label className="block text-sm font-medium text-fdn-fg">Auditor
           <select className={select} value={auditor} onChange={e => setAuditor(e.target.value)}>
             <option value="">Elige…</option>
             {cat.auditores.map(a => <option key={a.nomina} value={a.nombre}>{a.nombre}</option>)}
           </select>
         </label>
-        <label className="block text-sm font-medium text-gray-700">Fecha
+        <label className="block text-sm font-medium text-fdn-fg">Fecha
           <input type="date" className={select} value={fecha} max={hoyLocal()} onChange={e => setFecha(e.target.value)} />
         </label>
-        <label className="block text-sm font-medium text-gray-700">Mueble
+        <label className="block text-sm font-medium text-fdn-fg">Mueble
           <select className={select} value={numero} onChange={e => { setNumero(e.target.value); setAtendio(''); }}>
             <option value="">Elige…</option>
             {cat.muebles.map(m => (
@@ -213,11 +214,11 @@ const CapturaMueble: React.FC<Props> = ({ onGuardado, onCancel }) => {
         </label>
 
         {mueble && (
-          <div className="rounded-lg bg-blue-50 border border-blue-100 p-3 text-sm space-y-1">
-            <p><span className="text-gray-500">Ubicación:</span> {mueble.ubicacion} · {mueble.tipo}</p>
-            <p><span className="text-gray-500">Titular:</span> <b>{mueble.titular}</b></p>
-            <p><span className="text-gray-500">Suplente:</span> {mueble.suplente || '—'}</p>
-            <p><span className="text-gray-500">Le toca auditar:</span> {mueble.supervisorAudita || '—'}</p>
+          <div className="rounded-lg bg-fdn-blue-bg border border-fdn-line p-3 text-sm space-y-1">
+            <p><span className="text-fdn-muted">Ubicación:</span> {mueble.ubicacion} · {mueble.tipo}</p>
+            <p><span className="text-fdn-muted">Titular:</span> <b>{mueble.titular}</b></p>
+            <p><span className="text-fdn-muted">Suplente:</span> {mueble.suplente || '—'}</p>
+            <p><span className="text-fdn-muted">Le toca auditar:</span> {mueble.supervisorAudita || '—'}</p>
           </div>
         )}
         {yaAuditado && (
@@ -232,7 +233,7 @@ const CapturaMueble: React.FC<Props> = ({ onGuardado, onCancel }) => {
         )}
 
         {mueble && (
-          <label className="block text-sm font-medium text-gray-700">¿Quién atendió el mueble hoy?
+          <label className="block text-sm font-medium text-fdn-fg">¿Quién atendió el mueble hoy?
             <select className={select} value={atendio} onChange={e => setAtendio(e.target.value)}>
               <option value="">Elige…</option>
               <option value={mueble.titular}>{mueble.titular} (titular)</option>
@@ -247,36 +248,36 @@ const CapturaMueble: React.FC<Props> = ({ onGuardado, onCancel }) => {
       {BLOQUES.map(b => {
         const res = cal.porBloque.find(x => x.id === b.id)!;
         return (
-          <section key={b.id} className="bg-white mx-2 mt-4 rounded-xl shadow-sm overflow-hidden">
-            <div className="bg-blue-900 text-white px-4 py-2 flex justify-between items-center">
-              <h2 className="font-bold text-sm">{b.titulo}</h2>
-              <span className="text-xs">{res.na ? 'N/A' : `${res.obtenidos} / ${res.posibles} pts`}</span>
+          <section key={b.id} className="bg-white mx-2 mt-4 overflow-hidden rounded-2xl border border-fdn-line shadow-fdn">
+            <div className="px-4 pt-3 pb-1 flex justify-between items-center gap-2">
+              <h2 className="text-[12.8px] uppercase tracking-[.09em] font-extrabold text-fdn-blue-ink">{b.titulo}</h2>
+              <span className="text-xs font-bold text-fdn-muted tabular-nums">{res.na ? 'N/A' : `${res.obtenidos} / ${res.posibles} pts`}</span>
             </div>
             {b.id === 'S' && (
-              <p className="px-4 pt-2 text-xs text-gray-500">Si no hubo cliente en la zona, marca N/A: se califica sobre 85.</p>
+              <p className="px-4 pt-2 text-xs text-fdn-muted">Si no hubo cliente en la zona, marca N/A: se califica sobre 85.</p>
             )}
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-fdn-line">
               {PUNTOS_MUEBLE.filter(p => p.bloque === b.id).map(p => {
                 const r = respuestas[p.id];
                 const e = evid[p.id] || {};
                 const opciones: Resultado[] = b.id === 'S' ? ['CUMPLE', 'NO_CUMPLE', 'NA'] : ['CUMPLE', 'NO_CUMPLE'];
                 return (
                   <div key={p.id} className="p-4">
-                    <p className="text-sm font-semibold text-gray-900">
-                      <span className="text-gray-400 mr-1">{p.id}</span>{p.texto}
-                      <span className="text-gray-400 font-normal"> · {p.puntos} pts</span>
+                    <p className="text-sm font-semibold text-fdn-fg">
+                      <span className="text-fdn-muted mr-1">{p.id}</span>{p.texto}
+                      <span className="text-fdn-muted font-normal"> · {p.puntos} pts</span>
                       {p.critico && <span className="ml-2 text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">CRÍTICO</span>}
                     </p>
                     <div className={`grid gap-2 mt-3 ${opciones.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                       {opciones.map(o => {
                         const activo = r === o;
-                        const color = o === 'CUMPLE' ? 'bg-green-600 border-green-600' : o === 'NO_CUMPLE' ? 'bg-red-600 border-red-600' : 'bg-gray-600 border-gray-600';
+                        const color = o === 'CUMPLE' ? 'bg-green-600 border-green-600' : o === 'NO_CUMPLE' ? 'bg-red-700 border-red-700' : 'bg-gray-600 border-gray-600';
                         return (
                           <button
                             key={o}
                             type="button"
                             onClick={() => responder(p.id, p.bloque, o)}
-                            className={`py-4 rounded-xl text-base font-bold border-2 transition ${activo ? `${color} text-white shadow` : 'bg-white border-gray-200 text-gray-600'}`}
+                            className={`py-4 rounded-xl text-base font-bold border-2 transition ${activo ? `${color} text-white shadow` : 'bg-white border-fdn-line text-fdn-muted'}`}
                           >
                             {ETIQUETA[o]}
                           </button>
@@ -291,39 +292,39 @@ const CapturaMueble: React.FC<Props> = ({ onGuardado, onCancel }) => {
                           {e.foto ? (
                             <div className="flex items-center gap-3">
                               <img src={e.foto} alt={`Foto ${p.id}`} className="h-20 w-20 object-cover rounded-lg border" />
-                              <label className="text-sm text-blue-800 underline">
+                              <label className="text-sm text-fdn-blue underline">
                                 Cambiar foto
                                 <input type="file" accept="image/*" capture="environment" className="hidden" onChange={ev => tomarFoto(p.id, ev.target.files?.[0])} />
                               </label>
                             </div>
                           ) : (
                             <label className="flex items-center justify-center gap-2 w-full py-3 rounded-lg border-2 border-dashed border-red-300 bg-white text-red-800 font-semibold">
-                              {cargandoFoto === p.id ? 'Procesando foto…' : '📷 Tomar foto'}
+                              {cargandoFoto === p.id ? 'Procesando foto…' : <span className="inline-flex items-center gap-2"><Icono nombre="camara" tam={20} /> Tomar foto</span>}
                               <input type="file" accept="image/*" capture="environment" className="hidden" onChange={ev => tomarFoto(p.id, ev.target.files?.[0])} />
                             </label>
                           )}
                         </div>
                         <textarea
-                          className="block w-full rounded-lg border border-gray-300 p-2 text-sm" rows={2}
+                          className="block w-full rounded-lg border border-fdn-campo p-2 text-sm" rows={2}
                           placeholder="¿Qué se encontró?" value={obs[p.id] || ''}
                           onChange={ev => setObs(prev => ({ ...prev, [p.id]: ev.target.value }))}
                         />
                         <textarea
-                          className="block w-full rounded-lg border border-gray-300 p-2 text-sm" rows={2}
+                          className="block w-full rounded-lg border border-fdn-campo p-2 text-sm" rows={2}
                           placeholder="Acción correctiva" value={e.accion || ''}
                           onChange={ev => cambiarEvid(p.id, 'accion', ev.target.value)}
                         />
                         <div className="grid grid-cols-2 gap-2">
-                          <label className="text-xs text-gray-700">Responsable
+                          <label className="text-xs text-fdn-fg">Responsable
                             <input
-                              list="responsables-mm" className="mt-1 block w-full rounded-lg border border-gray-300 p-2 text-sm"
+                              list="responsables-mm" className="mt-1 block w-full rounded-lg border border-fdn-campo p-2 text-sm"
                               value={e.responsable ?? ''} placeholder={mueble?.titular || 'Nombre'}
                               onChange={ev => cambiarEvid(p.id, 'responsable', ev.target.value)}
                             />
                           </label>
-                          <label className="text-xs text-gray-700">Fecha compromiso
+                          <label className="text-xs text-fdn-fg">Fecha compromiso
                             <input
-                              type="date" min={fecha} className="mt-1 block w-full rounded-lg border border-gray-300 p-2 text-sm"
+                              type="date" min={fecha} className="mt-1 block w-full rounded-lg border border-fdn-campo p-2 text-sm"
                               value={e.fechaCompromiso || ''} onChange={ev => cambiarEvid(p.id, 'fechaCompromiso', ev.target.value)}
                             />
                           </label>
@@ -332,7 +333,7 @@ const CapturaMueble: React.FC<Props> = ({ onGuardado, onCancel }) => {
                     )}
                     {r && r !== 'NO_CUMPLE' && (
                       <input
-                        className="mt-3 block w-full rounded-lg border border-gray-200 p-2 text-sm" placeholder="Observación (opcional)"
+                        className="mt-3 block w-full rounded-lg border border-fdn-line p-2 text-sm" placeholder="Observación (opcional)"
                         value={obs[p.id] || ''} onChange={ev => setObs(prev => ({ ...prev, [p.id]: ev.target.value }))}
                       />
                     )}
@@ -346,16 +347,16 @@ const CapturaMueble: React.FC<Props> = ({ onGuardado, onCancel }) => {
       <datalist id="responsables-mm">{responsables.map(n => <option key={n} value={n} />)}</datalist>
 
       {/* Firmas */}
-      <section className="bg-white mx-2 mt-4 p-4 rounded-xl shadow-sm space-y-3">
-        <h2 className="font-bold text-blue-900">Firmas</h2>
+      <section className="bg-white mx-2 mt-4 p-4 rounded-2xl border border-fdn-line shadow-fdn space-y-3">
+        <h2 className="text-[12.8px] uppercase tracking-[.09em] font-extrabold text-fdn-blue-ink">Firmas</h2>
         <button
           type="button" disabled={!auditor} onClick={() => setFirmando('auditor')}
-          className={`w-full py-3 rounded-xl border-2 font-semibold ${firmaAuditor ? 'border-green-600 text-green-700 bg-green-50' : 'border-blue-900 text-blue-900'} disabled:opacity-40`}
+          className={`w-full py-3 rounded-xl border-2 font-semibold ${firmaAuditor ? 'border-green-600 text-green-700 bg-green-50' : 'border-fdn-blue text-fdn-blue-ink'} disabled:opacity-40`}
         >
           {firmaAuditor ? '✓ Firmó el auditor' : `Firma del auditor${auditor ? ` (${auditor})` : ''}`}
         </button>
         {mueble && atendio && !mismoNombre(atendio, mueble.titular) && (
-          <label className="block text-sm text-gray-700">¿Quién firma por el mueble?
+          <label className="block text-sm text-fdn-fg">¿Quién firma por el mueble?
             <select className={select} value={firmoVendedor} onChange={e => { setFirmoVendedor(e.target.value); setFirmaVendedor(''); }}>
               <option value={mueble.titular}>{mueble.titular} (titular)</option>
               <option value={atendio}>{atendio} (atendió hoy; el titular no está)</option>
@@ -364,7 +365,7 @@ const CapturaMueble: React.FC<Props> = ({ onGuardado, onCancel }) => {
         )}
         <button
           type="button" disabled={!mueble} onClick={() => setFirmando('vendedor')}
-          className={`w-full py-3 rounded-xl border-2 font-semibold ${firmaVendedor ? 'border-green-600 text-green-700 bg-green-50' : 'border-blue-900 text-blue-900'} disabled:opacity-40`}
+          className={`w-full py-3 rounded-xl border-2 font-semibold ${firmaVendedor ? 'border-green-600 text-green-700 bg-green-50' : 'border-fdn-blue text-fdn-blue-ink'} disabled:opacity-40`}
         >
           {firmaVendedor ? `✓ Firmó ${firmoVendedor}` : `Firma del vendedor${firmoVendedor ? ` (${firmoVendedor})` : ''}`}
         </button>
@@ -383,12 +384,12 @@ const CapturaMueble: React.FC<Props> = ({ onGuardado, onCancel }) => {
       )}
 
       {/* Barra inferior */}
-      <div className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 p-3 z-30">
+      <div className="fixed bottom-0 inset-x-0 bg-white border-t border-fdn-line p-3 z-30">
         <div className="max-w-2xl mx-auto flex gap-3">
-          <button type="button" onClick={onCancel} className="px-4 py-3 rounded-xl text-gray-600 font-semibold">Cancelar</button>
+          <button type="button" onClick={onCancel} className="px-4 py-3 rounded-xl text-fdn-muted font-semibold">Cancelar</button>
           <button
             type="button" onClick={guardar} disabled={guardando}
-            className="flex-1 py-3 rounded-xl bg-red-600 text-white text-lg font-bold shadow disabled:opacity-60"
+            className="flex-1 py-3 rounded-xl bg-fdn-red text-white text-lg font-bold shadow disabled:opacity-60"
           >
             {guardando ? 'Guardando…' : faltan.length ? `Guardar (faltan ${faltan.length})` : 'Guardar auditoría'}
           </button>

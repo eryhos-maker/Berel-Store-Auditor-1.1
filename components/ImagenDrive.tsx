@@ -23,12 +23,12 @@ const ImagenDrive: React.FC<ImagenDriveProps> = ({ src, alt, className }) => {
 
   if (error) {
     return (
-      <a href={src} target="_blank" rel="noreferrer" className="text-[9px] text-blue-700 underline">
+      <a href={src} target="_blank" rel="noreferrer" className="text-[9px] text-fdn-blue underline">
         Ver {alt.toLowerCase()} en Drive
       </a>
     );
   }
-  if (!url) return <span className="text-[9px] text-gray-400 animate-pulse">Cargando…</span>;
+  if (!url) return <span className="text-[9px] text-fdn-muted animate-pulse">Cargando…</span>;
   return <img src={url} alt={alt} className={className} />;
 };
 
