@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { AUDIT_SECTIONS } from '../constants';
 import { Store, Person, AuditRecord, AuditItem } from '../types';
-import { StorageService } from '../services/storageService';
+import { SheetsService } from '../services/sheetsService';
 import SignaturePad from './SignaturePad';
 
 interface AuditFormProps {
@@ -15,7 +15,8 @@ const AuditForm: React.FC<AuditFormProps> = ({ onFinish, onCancel }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Header State
-  const [folio, setFolio] = useState('');
+  // Identificador fijo de esta captura: si se reintenta el guardado, la hoja no la duplica.
+  const [auditId] = useState(() => crypto.randomUUID());
   const [selectedStore, setSelectedStore] = useState('');
   const [selectedManager, setSelectedManager] = useState('');
   const [selectedAuditor, setSelectedAuditor] = useState('');
@@ -33,25 +34,14 @@ const AuditForm: React.FC<AuditFormProps> = ({ onFinish, onCancel }) => {
   const [managerSignature, setManagerSignature] = useState<string>('');
   const [auditorSignature, setAuditorSignature] = useState<string>('');
 
-  const generateFolio = () => {
-    const now = new Date();
-    const dateStr = now.getFullYear().toString() +
-      (now.getMonth() + 1).toString().padStart(2, '0') +
-      now.getDate().toString().padStart(2, '0');
-    // Generate 4 random digits
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000).toString();
-    return `AB-${dateStr}-${randomSuffix}`;
-  };
-
   useEffect(() => {
     const loadMasterData = async () => {
-      const s = await StorageService.getStores();
-      const p = await StorageService.getPeople();
+      const s = await SheetsService.getStores();
+      const p = await SheetsService.getPeople();
       setStores(s);
       setPeople(p);
     };
     loadMasterData();
-    setFolio(generateFolio());
   }, []);
 
   // --- Derived State for Progress & Validation ---
@@ -184,8 +174,8 @@ const AuditForm: React.FC<AuditFormProps> = ({ onFinish, onCancel }) => {
     const auditorName = people.find(p => p.id === selectedAuditor)?.name || '';
 
     const newAudit: AuditRecord = {
-      id: '',
-      folio: folio,
+      id: auditId,
+      folio: '', // Lo asigna la hoja al guardar
       storeName,
       managerName,
       auditorName,
@@ -219,12 +209,12 @@ const AuditForm: React.FC<AuditFormProps> = ({ onFinish, onCancel }) => {
     <div className="max-w-3xl mx-auto pb-24 relative">
       
       {/* Progress Bar (Sticky) */}
-      <div className="sticky top-0 z-40 bg-gray-50 pt-2 pb-2 mb-2 px-1">
-        <div className="flex justify-between text-xs font-semibold text-gray-600 mb-1 px-1">
+      <div className="sticky top-0 z-40 bg-fdn-bg pt-2 pb-2 mb-2 px-1">
+        <div className="flex justify-between text-xs font-semibold text-fdn-muted mb-1 px-1">
            <span>Progreso de Auditoría</span>
            <span>{progressPercentage}% ({answeredCount}/{totalQuestions})</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5 shadow-inner">
+        <div className="w-full bg-fdn-surface-2 rounded-full h-2.5 shadow-inner">
           <div 
             className="bg-green-600 h-2.5 rounded-full transition-all duration-500 ease-out" 
             style={{ width: `${progressPercentage}%` }}
@@ -233,21 +223,21 @@ const AuditForm: React.FC<AuditFormProps> = ({ onFinish, onCancel }) => {
       </div>
 
       {/* Header Info */}
-      <div className="bg-white p-4 rounded-lg shadow-sm mb-6 border-l-4 border-blue-900 mx-1 md:mx-0">
-        <h2 className="text-xl font-bold text-blue-900 mb-4 flex items-center">
-          <span className="mr-2">📋</span> Datos Generales
+      <div className="bg-white p-4 mb-6 mx-1 md:mx-0 rounded-2xl border border-fdn-line shadow-fdn">
+        <h2 className="text-xl font-bold text-fdn-blue-ink mb-4 flex items-center">
+          Datos generales
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <label className="block text-xs uppercase font-bold text-gray-500">Folio</label>
-            <div className="mt-1 block w-full rounded-md border-gray-300 bg-blue-50 p-2 border font-mono font-bold text-blue-900 tracking-wider">
-              {folio}
+            <label className="block text-xs uppercase font-bold text-fdn-muted">Folio</label>
+            <div className="mt-1 block w-full rounded-md border-fdn-campo bg-fdn-blue-bg p-2 border text-sm text-fdn-blue-ink">
+              Se asigna al guardar
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Tienda <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-fdn-fg">Tienda <span className="text-red-500">*</span></label>
             <select 
-              className={`mt-1 block w-full rounded-md shadow-sm p-2 border ${!selectedStore && showValidationErrors ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'} bg-white`}
+              className={`mt-1 block w-full rounded-md shadow-sm p-2 border ${!selectedStore && showValidationErrors ? 'border-red-500 ring-1 ring-red-500' : 'border-fdn-campo'} bg-white`}
               value={selectedStore}
               onChange={(e) => setSelectedStore(e.target.value)}
             >
@@ -256,26 +246,26 @@ const AuditForm: React.FC<AuditFormProps> = ({ onFinish, onCancel }) => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Fecha y Hora</label>
+            <label className="block text-sm font-medium text-fdn-fg">Fecha y Hora</label>
             <div className="flex gap-2">
               <input 
                 type="date" 
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border bg-white"
+                className="mt-1 block w-full rounded-[10px] border-fdn-campo p-3 border bg-white"
                 value={auditDate}
                 onChange={(e) => setAuditDate(e.target.value)}
               />
               <input 
                 type="time" 
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border bg-white"
+                className="mt-1 block w-full rounded-[10px] border-fdn-campo p-3 border bg-white"
                 value={auditTime}
                 onChange={(e) => setAuditTime(e.target.value)}
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Gerente <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-fdn-fg">Gerente <span className="text-red-500">*</span></label>
             <select 
-              className={`mt-1 block w-full rounded-md shadow-sm p-2 border ${!selectedManager && showValidationErrors ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'} bg-white`}
+              className={`mt-1 block w-full rounded-md shadow-sm p-2 border ${!selectedManager && showValidationErrors ? 'border-red-500 ring-1 ring-red-500' : 'border-fdn-campo'} bg-white`}
               value={selectedManager}
               onChange={(e) => setSelectedManager(e.target.value)}
             >
@@ -284,9 +274,9 @@ const AuditForm: React.FC<AuditFormProps> = ({ onFinish, onCancel }) => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Auditor <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-fdn-fg">Auditor <span className="text-red-500">*</span></label>
             <select 
-              className={`mt-1 block w-full rounded-md shadow-sm p-2 border ${!selectedAuditor && showValidationErrors ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'} bg-white`}
+              className={`mt-1 block w-full rounded-md shadow-sm p-2 border ${!selectedAuditor && showValidationErrors ? 'border-red-500 ring-1 ring-red-500' : 'border-fdn-campo'} bg-white`}
               value={selectedAuditor}
               onChange={(e) => setSelectedAuditor(e.target.value)}
             >
@@ -303,18 +293,18 @@ const AuditForm: React.FC<AuditFormProps> = ({ onFinish, onCancel }) => {
           const status = getSectionStatus(section.id);
           const isActive = activeSection === section.id;
           
-          let statusClasses = 'bg-white text-gray-500 border-gray-200'; // Pending
-          let icon = <span className="w-4 h-4 rounded-full bg-gray-200 text-gray-500 text-[10px] flex items-center justify-center font-mono mr-2">{section.id}</span>;
+          let statusClasses = 'bg-white text-fdn-muted border-fdn-line'; // Pending
+          let icon = <span className="w-4 h-4 rounded-full bg-fdn-surface-2 text-fdn-muted text-[10px] flex items-center justify-center font-mono mr-2">{section.id}</span>;
 
           if (isActive) {
-            statusClasses = 'bg-blue-900 text-white border-blue-900 shadow-md transform scale-105';
+            statusClasses = 'bg-fdn-blue text-white border-fdn-blue shadow-md transform scale-105';
             icon = <span className="w-4 h-4 rounded-full bg-blue-700 text-white text-[10px] flex items-center justify-center font-mono mr-2">{section.id}</span>;
           } else if (status === 'completed') {
             statusClasses = 'bg-green-50 text-green-700 border-green-200';
             icon = <span className="mr-2 text-green-600 font-bold">✓</span>;
           } else if (status === 'error') {
-            statusClasses = 'bg-red-50 text-red-600 border-red-300 animate-pulse';
-            icon = <span className="mr-2 text-red-600 font-bold">!</span>;
+            statusClasses = 'bg-red-50 text-fdn-red-ink border-red-300 animate-pulse';
+            icon = <span className="mr-2 text-fdn-red-ink font-bold">!</span>;
           }
 
           return (
@@ -334,27 +324,27 @@ const AuditForm: React.FC<AuditFormProps> = ({ onFinish, onCancel }) => {
       <div className="space-y-6 mx-1 md:mx-0">
         {AUDIT_SECTIONS.filter(s => s.id === activeSection).map(section => (
           <div key={section.id} className="animate-fade-in-up">
-            <div className="bg-blue-900 px-4 py-3 rounded-t-lg shadow-sm flex justify-between items-center">
+            <div className="bg-fdn-blue px-4 py-3 rounded-t-lg shadow-sm flex justify-between items-center">
               <h3 className="font-bold text-white text-lg">{section.id}. {section.title}</h3>
-              <span className="text-xs bg-blue-800 text-blue-100 px-2 py-1 rounded">Max: {section.maxPoints} pts</span>
+              <span className="text-xs bg-fdn-blue-2 text-blue-100 px-2 py-1 rounded">Max: {section.maxPoints} pts</span>
             </div>
             
-            <div className="bg-white rounded-b-lg shadow-sm border border-t-0 border-gray-200 divide-y divide-gray-100">
+            <div className="bg-white rounded-b-lg shadow-sm border border-t-0 border-fdn-line divide-y divide-fdn-line">
               {section.questions.map(q => {
                 const currentScore = answers[q.id]?.score;
                 const isError = showValidationErrors && !currentScore;
 
                 return (
-                  <div key={q.id} className={`p-4 transition-colors ${isError ? 'bg-red-50' : 'hover:bg-gray-50'}`}>
+                  <div key={q.id} className={`p-4 transition-colors ${isError ? 'bg-red-50' : 'hover:bg-fdn-bg'}`}>
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex-1">
                         <div className="flex items-center">
-                          <span className="font-bold text-gray-400 text-xs mr-2 border border-gray-200 px-1 rounded">{q.id}</span>
-                          <span className={`font-semibold ${isError ? 'text-red-700' : 'text-gray-800'}`}>
+                          <span className="font-bold text-fdn-muted text-xs mr-2 border border-fdn-line px-1 rounded">{q.id}</span>
+                          <span className={`font-semibold ${isError ? 'text-red-700' : 'text-fdn-fg'}`}>
                             {q.category}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1 ml-8">{q.criterion}</p>
+                        <p className="text-xs text-fdn-muted mt-1 ml-8">{q.criterion}</p>
                       </div>
                       {isError && (
                         <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-1 rounded ml-2 whitespace-nowrap">
@@ -374,11 +364,11 @@ const AuditForm: React.FC<AuditFormProps> = ({ onFinish, onCancel }) => {
                             className={`py-3 px-1 rounded-md text-sm font-bold flex flex-col items-center justify-center border transition-all duration-200
                               ${isSelected
                                 ? `${opt.color} text-white shadow-lg scale-[1.02] border-transparent ring-2 ring-offset-2 ring-gray-300` 
-                                : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400'
+                                : 'bg-white text-fdn-muted border-fdn-line hover:border-fdn-muted'
                               }`}
                           >
                             <span className="mb-0.5">{opt.label}</span>
-                            <span className={`text-[10px] font-normal ${isSelected ? 'text-white/90' : 'text-gray-400'}`}>{opt.value} pts</span>
+                            <span className={`text-[10px] font-normal ${isSelected ? 'text-white/90' : 'text-fdn-muted'}`}>{opt.value} pts</span>
                           </button>
                         );
                       })}
@@ -388,8 +378,8 @@ const AuditForm: React.FC<AuditFormProps> = ({ onFinish, onCancel }) => {
                     <div className="ml-1">
                       <input
                         type="text"
-                        placeholder="📝 Agregar observación..."
-                        className="w-full text-sm border-gray-300 rounded-md border-0 border-b-2 bg-transparent p-2 focus:ring-0 focus:border-blue-500 transition-colors placeholder-gray-400"
+                        placeholder="Agregar observación (opcional)"
+                        className="w-full text-sm border-fdn-campo rounded-md border-0 border-b-2 bg-transparent p-2 focus:ring-0 focus:border-fdn-blue-2 transition-colors placeholder-gray-400"
                         value={answers[q.id]?.observation || ''}
                         onChange={(e) => handleObservation(q.id, e.target.value)}
                       />
@@ -403,24 +393,24 @@ const AuditForm: React.FC<AuditFormProps> = ({ onFinish, onCancel }) => {
       </div>
 
       {/* Floating Footer Action */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex justify-between items-center z-40">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-fdn-line p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex justify-between items-center z-40">
         <div className="flex flex-col">
-           <span className="text-xs text-gray-500 uppercase font-bold tracking-wide">Total</span>
-           <span className="font-black text-2xl text-blue-900 leading-none">{calculateTotal()} <span className="text-sm font-medium text-gray-400">/ 100</span></span>
+           <span className="text-xs text-fdn-muted uppercase font-bold tracking-wide">Total</span>
+           <span className="font-black text-2xl text-fdn-blue-ink leading-none">{calculateTotal()} <span className="text-sm font-medium text-fdn-muted">/ 100</span></span>
         </div>
         
         <div className="flex gap-3 items-center">
           <button 
             onClick={onCancel}
             disabled={isSubmitting}
-            className="hidden md:block px-4 py-2 text-gray-600 font-medium hover:text-gray-800 disabled:opacity-50"
+            className="hidden md:block px-4 py-2 text-fdn-muted font-medium hover:text-fdn-fg disabled:opacity-50"
           >
             Cancelar
           </button>
           
           <div className="flex flex-col items-end">
             {showValidationErrors && totalQuestions - answeredCount > 0 && (
-               <span className="text-xs text-red-600 font-bold mb-1 animate-pulse">
+               <span className="text-xs text-fdn-red-ink font-bold mb-1 animate-pulse">
                  Faltan {totalQuestions - answeredCount} respuestas
                </span>
             )}

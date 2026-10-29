@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Conexión con la hoja (clave): nunca a GitHub
+apps-script/zz-*.gs
+
+.vercel
+.env*
+!.env.example

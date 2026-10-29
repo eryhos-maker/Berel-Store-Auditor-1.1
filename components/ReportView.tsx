@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { AuditRecord, AuditItem } from '../types';
-import { StorageService } from '../services/storageService';
-import { AUDIT_SECTIONS, BEREL_LOGO_URL } from '../constants';
+import ImagenDrive from './ImagenDrive';
+import { guardarPdfUnaHoja, pdfUnaHojaBlob } from '../services/pdfUnaHoja';
+import { AUDIT_SECTIONS } from '../constants';
 
 // Declare html2pdf since it is loaded via script tag
 declare var html2pdf: any;
@@ -19,7 +20,7 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
       case 'TIENDA_MODELO': return 'text-green-800 bg-green-50 border-green-200';
       case 'ACEPTABLE': return 'text-yellow-800 bg-yellow-50 border-yellow-200';
       case 'CRITICO': return 'text-red-800 bg-red-50 border-red-200';
-      default: return 'text-gray-600';
+      default: return 'text-fdn-muted';
     }
   };
 
@@ -48,7 +49,7 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
     setGeneratingPDF(true);
     const element = document.getElementById('report-content');
     try {
-      await html2pdf().set(getPDFOptions()).from(element).save();
+      await guardarPdfUnaHoja(element!, getPDFOptions().filename);
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("Hubo un error al generar el PDF.");
@@ -76,7 +77,7 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
     if (navigator.share && navigator.canShare) {
       try {
         const element = document.getElementById('report-content');
-        const pdfBlob = await html2pdf().set(getPDFOptions()).from(element).output('blob');
+        const pdfBlob = await pdfUnaHojaBlob(element!);
         const file = new File([pdfBlob], `Reporte_${audit.folio}.pdf`, { type: 'application/pdf' });
 
         if (navigator.canShare({ files: [file] })) {
@@ -97,7 +98,7 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
     // We automatically download the PDF so the user has it ready to drag-and-drop
     try {
         const element = document.getElementById('report-content');
-        await html2pdf().set(getPDFOptions()).from(element).save();
+        await guardarPdfUnaHoja(element!, getPDFOptions().filename);
     } catch (e) {
         console.error("Error auto-downloading for share fallback", e);
     }
@@ -114,20 +115,20 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
   const failedItems = (Object.values(audit.items) as AuditItem[]).filter(i => i.observation || i.score < 3);
 
   return (
-    <div className="max-w-4xl mx-auto p-4 bg-gray-100 min-h-screen">
+    <div className="max-w-4xl mx-auto p-4 bg-fdn-bg min-h-screen">
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 print:hidden gap-4 bg-white p-4 rounded-lg shadow-sm">
-        <button onClick={onClose} className="text-gray-600 hover:text-gray-900 font-medium flex items-center gap-2">
-          <span>⬅</span> Volver
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 print:hidden gap-4 bg-white p-4 rounded-2xl border border-fdn-line shadow-fdn">
+        <button onClick={onClose} className="text-fdn-muted hover:text-fdn-fg font-medium flex items-center gap-2">
+          Volver
         </button>
         
         <div className="flex flex-wrap gap-2 justify-end w-full md:w-auto">
           <button 
             onClick={handleDownloadPDF} 
             disabled={generatingPDF}
-            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded shadow text-sm hover:bg-red-700 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 bg-fdn-red text-white px-4 py-2 rounded shadow text-sm hover:bg-fdn-red-ink disabled:opacity-50 transition-colors"
           >
-            {generatingPDF ? '⏳ Generando...' : '📥 Descargar PDF'}
+            {generatingPDF ? 'Generando…' : 'Descargar PDF'}
           </button>
 
           <button 
@@ -135,7 +136,7 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
             disabled={generatingPDF}
             className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded shadow text-sm hover:bg-green-700 disabled:opacity-50 transition-colors"
           >
-            📱 Compartir
+            Compartir
           </button>
         </div>
       </div>
@@ -150,7 +151,7 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
       */}
       <div 
         id="report-content" 
-        className="bg-white shadow-lg text-gray-900 mx-auto flex flex-col" 
+        className="bg-white shadow-lg text-fdn-fg mx-auto flex flex-col" 
         style={{ 
           width: '8in', 
           height: '10.5in', // Fixed height to prevent overflow
@@ -160,44 +161,44 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
       >
         
         {/* HEADER - Compact */}
-        <div className="flex justify-between items-center border-b-2 border-red-600 pb-2 mb-3 shrink-0">
+        <div className="flex justify-between items-center border-b-2 border-fdn-red pb-2 mb-3 shrink-0">
           <div className="flex items-center gap-3">
              <img 
-               src={BEREL_LOGO_URL}
-               alt="Berel" 
+               src="/ferre-don-nico-logo.webp"
+               alt="Ferre Don Nico" 
                className="h-10 object-contain"
                onError={(e) => { e.currentTarget.style.display='none' }}
              />
              <div>
-               <h1 className="text-lg font-black text-blue-900 uppercase leading-none">Auditoría de Tienda</h1>
-               <p className="text-[9px] text-gray-500 uppercase tracking-wide">Reporte de Ejecución en Punto de Venta</p>
+               <h1 className="text-lg font-black text-fdn-blue-ink uppercase leading-none">Auditoría de Tienda</h1>
+               <p className="text-[9px] text-fdn-muted uppercase tracking-wide">Reporte de Ejecución en Punto de Venta</p>
              </div>
           </div>
           <div className="text-right">
-             <p className="text-[10px] font-bold text-gray-400">FOLIO</p>
-             <p className="text-base font-mono font-bold text-red-600 leading-none">{audit.folio}</p>
+             <p className="text-[10px] font-bold text-fdn-muted">FOLIO</p>
+             <p className="text-base font-mono font-bold text-fdn-red-ink leading-none">{audit.folio}</p>
           </div>
         </div>
 
         {/* INFO GRID - Very Compact */}
-        <div className="bg-gray-50 rounded border border-gray-200 p-2 mb-3 text-[10px] shrink-0">
+        <div className="bg-fdn-bg rounded border border-fdn-line p-2 mb-3 text-[10px] shrink-0">
           <div className="grid grid-cols-4 gap-x-2 gap-y-1">
-            <div className="col-span-2"><span className="font-bold text-blue-900 uppercase mr-1">Tienda:</span> {audit.storeName}</div>
-            <div><span className="font-bold text-blue-900 uppercase mr-1">Fecha:</span> {audit.date}</div>
-            <div><span className="font-bold text-blue-900 uppercase mr-1">Hora:</span> {audit.time}</div>
-            <div className="col-span-2"><span className="font-bold text-blue-900 uppercase mr-1">Gerente:</span> {audit.managerName}</div>
-            <div className="col-span-2"><span className="font-bold text-blue-900 uppercase mr-1">Auditor:</span> {audit.auditorName}</div>
+            <div className="col-span-2"><span className="font-bold text-fdn-blue-ink uppercase mr-1">Tienda:</span> {audit.storeName}</div>
+            <div><span className="font-bold text-fdn-blue-ink uppercase mr-1">Fecha:</span> {audit.date}</div>
+            <div><span className="font-bold text-fdn-blue-ink uppercase mr-1">Hora:</span> {audit.time}</div>
+            <div className="col-span-2"><span className="font-bold text-fdn-blue-ink uppercase mr-1">Gerente:</span> {audit.managerName}</div>
+            <div className="col-span-2"><span className="font-bold text-fdn-blue-ink uppercase mr-1">Auditor:</span> {audit.auditorName}</div>
           </div>
         </div>
 
         {/* SCORE & STATUS - Reduced height */}
         <div className="flex gap-3 mb-3 shrink-0 h-16">
           {/* Score */}
-          <div className="w-1/3 border rounded-lg p-1 flex flex-col items-center justify-center bg-blue-50 border-blue-100">
-            <span className="text-[9px] font-bold text-gray-500 uppercase">Calificación</span>
+          <div className="w-1/3 border rounded-lg p-1 flex flex-col items-center justify-center bg-fdn-blue-bg border-fdn-line">
+            <span className="text-[9px] font-bold text-fdn-muted uppercase">Calificación</span>
             <div className="flex items-baseline">
-              <span className="text-3xl font-black text-blue-900 leading-none">{audit.totalScore}</span>
-              <span className="text-xs text-gray-400 font-medium">/100</span>
+              <span className="text-3xl font-black text-fdn-blue-ink leading-none">{audit.totalScore}</span>
+              <span className="text-xs text-fdn-muted font-medium">/100</span>
             </div>
           </div>
           
@@ -211,8 +212,8 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
         {/* ACTION PLAN - Restricted Height */}
         {audit.actionPlan && (
           <div className="mb-3 shrink-0">
-             <h3 className="text-[10px] font-bold text-blue-900 uppercase border-b border-gray-200 mb-1 pb-0.5">🚀 Plan de Acción</h3>
-             <div className="bg-white text-[9px] text-justify text-gray-700 leading-snug p-2 border border-gray-100 rounded max-h-[1.8in] overflow-hidden">
+             <h3 className="text-[10px] font-bold text-fdn-blue-ink uppercase border-b border-fdn-line mb-1 pb-0.5">Plan de acción</h3>
+             <div className="bg-white text-[9px] text-justify text-fdn-fg leading-snug p-2 border border-fdn-line rounded max-h-[1.8in] overflow-hidden">
                {audit.actionPlan}
              </div>
           </div>
@@ -220,7 +221,7 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
 
         {/* FINDINGS - Auto Flex Area */}
         <div className="mb-2 flex-grow flex flex-col min-h-0">
-           <h3 className="text-[10px] font-bold text-blue-900 uppercase border-b border-gray-200 mb-2 pb-0.5 shrink-0">
+           <h3 className="text-[10px] font-bold text-fdn-blue-ink uppercase border-b border-fdn-line mb-2 pb-0.5 shrink-0">
              Detalle de Hallazgos ({failedItems.length})
            </h3>
            
@@ -239,36 +240,36 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
                         : 'bg-red-50 border-red-100 shadow-[inset_3px_0_0_0_rgba(239,68,68,0.3)]'    // Red for failure without note
                     }`}>
                       <div className="flex justify-between items-start">
-                        <span className="font-bold text-blue-900 line-clamp-1 w-3/4" title={question?.category}>
-                           {hasObs && <span className="mr-1 text-amber-600">📝</span>}
+                        <span className="font-bold text-fdn-blue-ink line-clamp-1 w-3/4" title={question?.category}>
+                           
                            {item.questionId} - {question?.category}
                         </span>
-                        <span className={`px-1 rounded font-bold text-[8px] border shrink-0 ${hasObs ? 'bg-white text-amber-700 border-amber-200' : 'bg-white text-red-600 border-red-100'}`}>
+                        <span className={`px-1 rounded font-bold text-[8px] border shrink-0 ${hasObs ? 'bg-white text-amber-700 border-amber-200' : 'bg-white text-fdn-red-ink border-red-100'}`}>
                           {item.score} pts
                         </span>
                       </div>
                       
                       {/* Description/Criterion */}
-                      <p className="text-[8px] text-gray-500 italic leading-tight border-b border-gray-200 pb-1 mb-0.5 opacity-80">
+                      <p className="text-[8px] text-fdn-muted italic leading-tight border-b border-fdn-line pb-1 mb-0.5 opacity-80">
                         "{question?.criterion}"
                       </p>
 
                       {/* Observation */}
-                      <div className={`font-medium leading-tight line-clamp-2 ${hasObs ? 'bg-white/60 p-1 rounded text-gray-900 border border-amber-100' : 'text-gray-400 italic'}`}>
-                        <span className={`font-bold ${hasObs ? 'text-amber-700' : 'text-gray-400'}`}>Obs:</span> {item.observation || "Sin observación detallada."}
+                      <div className={`font-medium leading-tight line-clamp-2 ${hasObs ? 'bg-white/60 p-1 rounded text-fdn-fg border border-amber-100' : 'text-fdn-muted italic'}`}>
+                        <span className={`font-bold ${hasObs ? 'text-amber-700' : 'text-fdn-muted'}`}>Obs:</span> {item.observation || "Sin observación detallada."}
                       </div>
                     </div>
                    );
                  })}
                  {failedItems.length > 10 && (
-                   <div className="col-span-2 text-center text-[9px] text-red-600 font-bold italic">
+                   <div className="col-span-2 text-center text-[9px] text-fdn-red-ink font-bold italic">
                      ... {failedItems.length - 10} hallazgos más registrados en sistema.
                    </div>
                  )}
                </div>
              ) : (
                <div className="h-full flex items-center justify-center">
-                  <p className="text-[10px] text-gray-500 italic text-center py-4 bg-gray-50 rounded w-full">
+                  <p className="text-[10px] text-fdn-muted italic text-center py-4 bg-fdn-bg rounded w-full">
                     Sin hallazgos negativos relevantes. Excelente ejecución.
                   </p>
                </div>
@@ -282,30 +283,30 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
             <div className="text-center flex flex-col items-center">
               <div className="h-16 w-full flex items-end justify-center mb-1">
                 {audit.managerSignature ? (
-                  <img src={audit.managerSignature} alt="Firma Gerente" className="max-h-16 max-w-full object-contain" />
+                  <ImagenDrive src={audit.managerSignature} alt="Firma Gerente" className="max-h-16 max-w-full object-contain" />
                 ) : (
-                  <div className="w-full border-b border-gray-400"></div>
+                  <div className="w-full border-b border-fdn-muted"></div>
                 )}
               </div>
-              {!audit.managerSignature && <div className="w-full border-b border-gray-400 -mt-1 mb-1"></div>}
-              <p className="font-bold text-[10px] text-blue-900 uppercase truncate px-2">{audit.managerName}</p>
-              <p className="text-[8px] text-gray-500">Firma Gerente</p>
+              {!audit.managerSignature && <div className="w-full border-b border-fdn-muted -mt-1 mb-1"></div>}
+              <p className="font-bold text-[10px] text-fdn-blue-ink uppercase truncate px-2">{audit.managerName}</p>
+              <p className="text-[8px] text-fdn-muted">Firma Gerente</p>
             </div>
             <div className="text-center flex flex-col items-center">
               <div className="h-16 w-full flex items-end justify-center mb-1">
                 {audit.auditorSignature ? (
-                   <img src={audit.auditorSignature} alt="Firma Auditor" className="max-h-16 max-w-full object-contain" />
+                   <ImagenDrive src={audit.auditorSignature} alt="Firma Auditor" className="max-h-16 max-w-full object-contain" />
                 ) : (
-                   <div className="w-full border-b border-gray-400"></div>
+                   <div className="w-full border-b border-fdn-muted"></div>
                 )}
               </div>
-              {!audit.auditorSignature && <div className="w-full border-b border-gray-400 -mt-1 mb-1"></div>}
-              <p className="font-bold text-[10px] text-blue-900 uppercase truncate px-2">{audit.auditorName}</p>
-              <p className="text-[8px] text-gray-500">Firma Auditor</p>
+              {!audit.auditorSignature && <div className="w-full border-b border-fdn-muted -mt-1 mb-1"></div>}
+              <p className="font-bold text-[10px] text-fdn-blue-ink uppercase truncate px-2">{audit.auditorName}</p>
+              <p className="text-[8px] text-fdn-muted">Firma Auditor</p>
             </div>
           </div>
-          <div className="mt-2 text-center border-t border-gray-100 pt-1">
-            <p className="text-[7px] text-gray-400">
+          <div className="mt-2 text-center border-t border-fdn-line pt-1">
+            <p className="text-[7px] text-fdn-muted">
                Documento generado digitalmente por Berel Auditor App | {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()} | ID: {audit.folio}
             </p>
           </div>
