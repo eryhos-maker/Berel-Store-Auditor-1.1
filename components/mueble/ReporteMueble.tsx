@@ -3,8 +3,7 @@ import { AuditoriaMueble } from '../../types';
 import { SemaforoChip } from './SemaforoChip';
 import ImagenDrive from '../ImagenDrive';
 
-// html2pdf se carga con <script> en index.html.
-declare var html2pdf: any;
+import { guardarPdfUnaHoja } from '../../services/pdfUnaHoja';
 
 interface Props {
   auditoria: AuditoriaMueble;
@@ -81,14 +80,7 @@ const ReporteMueble: React.FC<Props> = ({ auditoria: a, onClose, textoCerrar = '
     // Se espera a que el reporte se acomode al ancho de hoja carta antes de "fotografiarlo".
     await new Promise(r => setTimeout(r, 150));
     try {
-      await html2pdf().set({
-        margin: [0.3, 0.3, 0.3, 0.3],
-        filename: `Supervision_Mueble_${a.mueble.numero}_${a.folio}.pdf`,
-        image: { type: 'jpeg', quality: 0.92 },
-        html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0 },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'], avoid: '.no-cortar' },
-      }).from(document.getElementById('reporte-mueble')).save();
+      await guardarPdfUnaHoja(document.getElementById('reporte-mueble')!, `Supervision_Mueble_${a.mueble.numero}_${a.folio}.pdf`);
     } catch (e) {
       console.error(e);
       alert('No se pudo generar el PDF. Intenta de nuevo.');
@@ -136,8 +128,9 @@ const ReporteMueble: React.FC<Props> = ({ auditoria: a, onClose, textoCerrar = '
           </div>
 
           {/* Datos y calificación */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5 no-cortar">
-            <div className="sm:col-span-2 text-sm space-y-1">
+          {/* Al generar el PDF el reporte se compacta (columnas) para caber en una hoja carta. */}
+          <div className={`grid gap-4 mb-5 ${generando ? 'grid-cols-3' : 'grid-cols-1 sm:grid-cols-3'}`}>
+            <div className={`text-sm space-y-1 ${generando ? 'col-span-2' : 'sm:col-span-2'}`}>
               <p><span className="text-fdn-muted">Mueble:</span> <b>{a.mueble.numero}</b> · {a.mueble.ubicacion}</p>
               <p><span className="text-fdn-muted">Familias:</span> {a.mueble.familias}</p>
               <p><span className="text-fdn-muted">Titular:</span> <b>{a.mueble.titular}</b>{a.mueble.suplente ? ` · Suplente: ${a.mueble.suplente}` : ''}</p>
@@ -159,7 +152,7 @@ const ReporteMueble: React.FC<Props> = ({ auditoria: a, onClose, textoCerrar = '
 
           {/* Resumen por bloque */}
           <h2 className="text-xs font-bold uppercase tracking-wide text-fdn-blue-ink mb-2">Resumen por bloque</h2>
-          <div className="space-y-2 mb-5 no-cortar">
+          <div className={`mb-5 ${generando ? 'grid grid-cols-2 gap-x-6 gap-y-2' : 'space-y-2'}`}>
             {bloques.map(b => {
               const pct = b.posibles ? Math.round((b.obtenidos / b.posibles) * 100) : 0;
               return (
@@ -181,16 +174,16 @@ const ReporteMueble: React.FC<Props> = ({ auditoria: a, onClose, textoCerrar = '
           <table className="w-full text-xs mb-5">
             <tbody>
               {a.resultados.map(r => (
-                <tr key={r.punto} className="border-b border-fdn-line align-top no-cortar">
-                  <td className="py-1.5 pr-2 font-bold text-fdn-muted w-8">{r.punto}</td>
-                  <td className="py-1.5 pr-2">
+                <tr key={r.punto} className={`border-b border-fdn-line align-top ${generando ? '[&>td]:py-0.5' : '[&>td]:py-1.5'}`}>
+                  <td className="pr-2 font-bold text-fdn-muted w-8">{r.punto}</td>
+                  <td className="pr-2">
                     {r.descripcion}
                     {r.observacion && <span className="block text-fdn-muted italic">{r.observacion}</span>}
                   </td>
-                  <td className={`py-1.5 text-right whitespace-nowrap font-semibold ${r.resultado === 'Cumple' ? 'text-green-700' : r.resultado === 'No cumple' ? 'text-red-700' : 'text-fdn-muted'}`}>
+                  <td className={`text-right whitespace-nowrap font-semibold ${r.resultado === 'Cumple' ? 'text-green-700' : r.resultado === 'No cumple' ? 'text-red-700' : 'text-fdn-muted'}`}>
                     {r.resultado === 'Cumple' ? '✓' : r.resultado === 'No cumple' ? '✗' : ''} {r.resultado}
                   </td>
-                  <td className="py-1.5 pl-2 text-right text-fdn-muted w-12">{r.resultado === 'N/A' ? '—' : `${r.obtenidos}/${r.posibles}`}</td>
+                  <td className="pl-2 text-right text-fdn-muted w-12">{r.resultado === 'N/A' ? '—' : `${r.obtenidos}/${r.posibles}`}</td>
                 </tr>
               ))}
             </tbody>
@@ -201,12 +194,12 @@ const ReporteMueble: React.FC<Props> = ({ auditoria: a, onClose, textoCerrar = '
           {plan.length === 0 ? (
             <p className="text-sm text-fdn-ok font-semibold mb-5">Sin puntos por corregir.</p>
           ) : (
-            <div className="space-y-3 mb-5">
+            <div className={`mb-5 ${generando ? 'grid grid-cols-2 gap-2' : 'space-y-3'}`}>
               {plan.map(r => {
                 const e = a.evidencias[r.punto];
                 return (
-                  <div key={r.punto} className="flex gap-3 border border-red-200 rounded-lg p-3 no-cortar">
-                    <div className="w-28 h-28 shrink-0 bg-fdn-bg rounded-lg overflow-hidden flex items-center justify-center">
+                  <div key={r.punto} className={`flex gap-3 border border-red-200 rounded-lg ${generando ? 'p-2' : 'p-3'}`}>
+                    <div className={`${generando ? 'w-20 h-20' : 'w-28 h-28'} shrink-0 bg-fdn-bg rounded-lg overflow-hidden flex items-center justify-center`}>
                       {e?.foto ? <ImagenDrive src={e.foto} alt={`Foto ${r.punto}`} className="w-full h-full object-cover" /> : <span className="text-[10px] text-fdn-muted">Sin foto</span>}
                     </div>
                     <div className="text-xs space-y-1">
@@ -227,7 +220,7 @@ const ReporteMueble: React.FC<Props> = ({ auditoria: a, onClose, textoCerrar = '
           )}
 
           {/* Firmas */}
-          <div className="grid grid-cols-2 gap-6 pt-4 no-cortar">
+          <div className="grid grid-cols-2 gap-6 pt-4">
             {[
               { firma: a.firmaAuditor, nombre: a.auditor, rol: 'Auditor' },
               { firma: a.firmaVendedor, nombre: a.firmoVendedor, rol: a.firmoVendedor === a.mueble.titular ? 'Vendedor titular' : 'Vendedor (atendió)' },

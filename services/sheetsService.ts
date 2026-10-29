@@ -1,4 +1,4 @@
-import { AuditRecord, Store, Person, AuditItem, CatalogosMueble, AuditoriaMueble } from '../types';
+import { AuditRecord, Store, Person, AuditItem, CatalogosMueble, AuditoriaMueble, MuebleMM } from '../types';
 
 // Conexión con la hoja de Google Sheets (Apps Script publicado como aplicación web).
 // Se configura en Vercel: VITE_SHEETS_URL (termina en /exec) y VITE_SHEETS_KEY.
@@ -153,6 +153,11 @@ export const SheetsService = {
       .sort((a, b) => orden(b).localeCompare(orden(a)))
       .map(({ registrado, ...a }) => a);
   },
+
+  /** Alta (original vacío) o cambio de un mueble. */
+  guardarMueble: (mueble: MuebleMM, original: string) => llamar<{ numero: string }>('mmMuebleGuardar', { mueble, original }),
+
+  borrarMueble: (numero: string) => llamar<{ borradas: number }>('mmMuebleBorrar', { numero }),
 
   // El folio lo pone la hoja (SM-AAAAMMDD-0001). Fotos y firmas se van a Drive.
   saveAuditoriaMueble: async (a: AuditoriaMueble): Promise<AuditoriaMueble> => {

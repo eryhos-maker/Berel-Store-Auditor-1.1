@@ -99,6 +99,10 @@ function ejecutar_(pet) {
       return conCandado_(function () { return agregarCatalogoMueble_(pet.hoja, pet.fila); });
     case 'mmAuditorias':
       return leerAuditoriasMueble_();
+    case 'mmMuebleGuardar':
+      return conCandado_(function () { return guardarMueble_(pet.original, pet.mueble); });
+    case 'mmMuebleBorrar':
+      return conCandado_(function () { return { borradas: borrarFilas_('MM_Muebles', 'Número', pet.numero) }; });
     case 'mmGuardar':
       return conCandado_(function () { return guardarAuditoriaMueble_(pet.auditoria); });
     case 'imagen':
@@ -250,6 +254,29 @@ function agregarCatalogoMueble_(nombre, fila) {
   if (buscarObjeto_(nombre, clave, fila[clave])) throw new Error('Ya existe ' + clave + ' ' + fila[clave] + ' en ' + nombre + '.');
   agregarFila_(nombre, fila);
   return { agregado: fila[clave] };
+}
+
+/**
+ * Alta o cambio de un mueble desde la consola. "original" es el número con que se abrió para editar
+ * (vacío = mueble nuevo). Las auditorías ya hechas no cambian: guardan su propia copia de titular y suplente.
+ */
+function guardarMueble_(original, m) {
+  if (!m || !String(m.numero || '').trim()) throw new Error('Falta el número del mueble.');
+  var numero = String(m.numero).trim();
+  var fila = {
+    'Número': numero, 'Ubicación': m.ubicacion || '', 'Tipo': m.tipo || '', 'Familias': m.familias || '',
+    'Tramos': m.tramos || '', 'Promoción': m.promocion || '', 'Alto valor': m.altoValor || '',
+    'Titular': m.titular || '', 'Suplente': m.suplente || '', 'Supervisor que audita': m.supervisorAudita || '', 'Activo': 'Sí',
+  };
+  if (numero !== String(original || '') && buscarObjeto_('MM_Muebles', 'Número', numero)) {
+    throw new Error('Ya existe el mueble ' + numero + '.');
+  }
+  if (!original) {
+    agregarFila_('MM_Muebles', fila);
+    return { numero: numero, nuevo: true };
+  }
+  if (!actualizarFila_('MM_Muebles', 'Número', original, fila)) throw new Error('No se encontró el mueble ' + original + '.');
+  return { numero: numero, nuevo: false };
 }
 
 function guardarAuditoriaMueble_(a) {
@@ -550,6 +577,26 @@ function agregarFilas_(nombre, objetos) {
   });
   h.getRange(inicio, 1, filas.length, enc.length).setValues(filas);
   return filas.length;
+}
+
+/** Cambia los campos de la primera fila cuya columna tiene ese valor. Regresa false si no la encontró. */
+function actualizarFila_(nombre, columna, valor, obj) {
+  var h = hoja_(nombre);
+  var enc = encabezadosDe_(h);
+  var i = enc.indexOf(columna);
+  if (i < 0 || h.getLastRow() < 2) return false;
+  var valores = h.getRange(2, i + 1, h.getLastRow() - 1, 1).getDisplayValues();
+  for (var f = 0; f < valores.length; f++) {
+    if (valores[f][0] !== String(valor)) continue;
+    enc.forEach(function (e, j) {
+      if (obj[e] === undefined) return;
+      var celda = h.getRange(f + 2, j + 1);
+      if (NUMERICAS.indexOf(e) < 0) celda.setNumberFormat('@');
+      celda.setValue(NUMERICAS.indexOf(e) >= 0 ? Number(obj[e]) || 0 : String(obj[e]));
+    });
+    return true;
+  }
+  return false;
 }
 
 /** Borra las filas cuya columna tiene exactamente ese valor. */

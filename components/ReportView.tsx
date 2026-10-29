@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AuditRecord, AuditItem } from '../types';
 import ImagenDrive from './ImagenDrive';
+import { guardarPdfUnaHoja, pdfUnaHojaBlob } from '../services/pdfUnaHoja';
 import { AUDIT_SECTIONS } from '../constants';
 
 // Declare html2pdf since it is loaded via script tag
@@ -48,7 +49,7 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
     setGeneratingPDF(true);
     const element = document.getElementById('report-content');
     try {
-      await html2pdf().set(getPDFOptions()).from(element).save();
+      await guardarPdfUnaHoja(element!, getPDFOptions().filename);
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("Hubo un error al generar el PDF.");
@@ -76,7 +77,7 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
     if (navigator.share && navigator.canShare) {
       try {
         const element = document.getElementById('report-content');
-        const pdfBlob = await html2pdf().set(getPDFOptions()).from(element).output('blob');
+        const pdfBlob = await pdfUnaHojaBlob(element!);
         const file = new File([pdfBlob], `Reporte_${audit.folio}.pdf`, { type: 'application/pdf' });
 
         if (navigator.canShare({ files: [file] })) {
@@ -97,7 +98,7 @@ const ReportView: React.FC<ReportViewProps> = ({ audit, onClose }) => {
     // We automatically download the PDF so the user has it ready to drag-and-drop
     try {
         const element = document.getElementById('report-content');
-        await html2pdf().set(getPDFOptions()).from(element).save();
+        await guardarPdfUnaHoja(element!, getPDFOptions().filename);
     } catch (e) {
         console.error("Error auto-downloading for share fallback", e);
     }

@@ -5,6 +5,7 @@ import { AUDIT_SECTIONS } from '../constants';
 import { BarraFDN } from './marca';
 
 const ConsolaMueble = lazy(() => import('./mueble/ConsolaMueble'));
+const CatalogoMuebles = lazy(() => import('./mueble/CatalogoMuebles'));
 
 interface AdminConsoleProps {
   onBack: () => void;
@@ -15,7 +16,7 @@ const AdminConsole: React.FC<AdminConsoleProps> = ({ onBack, onViewAudit }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   
-  const [activeTab, setActiveTab] = useState<'HISTORY' | 'DATA' | 'MUEBLE'>('MUEBLE');
+  const [activeTab, setActiveTab] = useState<'HISTORY' | 'DATA' | 'MUEBLE' | 'MUEBLES'>('MUEBLE');
   const [history, setHistory] = useState<AuditRecord[]>([]);
   const [loading, setLoading] = useState(false);
   
@@ -253,7 +254,7 @@ const AdminConsole: React.FC<AdminConsoleProps> = ({ onBack, onViewAudit }) => {
       <div className="max-w-6xl mx-auto p-4 md:p-6">
         {/* Secciones: chips como en la Consola de formularios */}
         <div className="flex gap-2 mb-6 overflow-x-auto -mx-4 px-4 pb-0.5">
-          {([['MUEBLE', 'Mueble Mina'], ['HISTORY', 'Auditorías Berel'], ['DATA', 'Catálogos Berel']] as const).map(([id, texto]) => (
+          {([['MUEBLE', 'Mueble Mina'], ['MUEBLES', 'Muebles y responsables'], ['HISTORY', 'Auditorías Berel'], ['DATA', 'Catálogos Berel']] as const).map(([id, texto]) => (
             <button
               key={id}
               aria-pressed={activeTab === id}
@@ -264,6 +265,12 @@ const AdminConsole: React.FC<AdminConsoleProps> = ({ onBack, onViewAudit }) => {
             </button>
           ))}
         </div>
+
+        {activeTab === 'MUEBLES' && (
+          <Suspense fallback={<p className="text-center text-fdn-muted py-10">Cargando…</p>}>
+            <CatalogoMuebles />
+          </Suspense>
+        )}
 
         {activeTab === 'MUEBLE' && (
           <Suspense fallback={<p className="text-center text-fdn-muted py-10">Cargando…</p>}>
