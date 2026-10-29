@@ -21,10 +21,24 @@ var ESQUEMA = {
   Berel_Auditorias: ['ID', 'Folio', 'Fecha', 'Hora', 'ID tienda', 'Tienda', 'ID gerente', 'Gerente',
     'ID auditor', 'Auditor', 'Puntaje', 'Estatus', 'Plan de acción', 'Firma gerente', 'Firma auditor', 'Registrado'],
   Berel_Resultados: ['Folio', 'ID pregunta', 'Puntos', 'Observación'],
+  // Supervisión de Mueble · Ferre Mina. Los catálogos se editan directo en la hoja.
+  MM_Muebles: ['Número', 'Ubicación', 'Tipo', 'Familias', 'Tramos', 'Promoción', 'Alto valor', 'Titular', 'Suplente',
+    'Supervisor que audita', 'Activo'],
+  MM_Vendedores: ['Nómina', 'Nombre', 'Horas', 'Supervisor', 'Activo'],
+  MM_Auditores: ['Nómina', 'Nombre', 'Activo'],
+  MM_Auditorias: ['ID', 'Folio', 'Fecha', 'Hora', 'Semana', 'Mes', 'Mueble', 'Ubicación', 'Familias', 'Titular', 'Suplente',
+    'Atendió', 'Supervisor del titular', 'Auditor', 'Auditor es supervisor directo', 'Servicio N/A', 'Puntos obtenidos',
+    'Puntos posibles', 'Calificación', 'Semáforo', 'Críticos fallados', 'Firma auditor', 'Firmó vendedor', 'Firma vendedor',
+    'Registrado'],
+  MM_Resultados: ['Folio', 'Punto', 'Bloque', 'Descripción', 'Resultado', 'Puntos posibles', 'Puntos obtenidos', 'Observación'],
+  MM_Evidencias: ['Folio', 'Punto', 'Foto', 'Acción correctiva', 'Responsable', 'Fecha compromiso'],
 };
 
+// Catálogos que se pueden dar de alta por la app y su columna clave (no se repite).
+var CATALOGOS_MM = { MM_Muebles: 'Número', MM_Vendedores: 'Nómina', MM_Auditores: 'Nómina' };
+
 // Columnas que se guardan como número (para poder sumar y promediar en la hoja). Las demás, como texto.
-var NUMERICAS = ['Puntaje', 'Puntos'];
+var NUMERICAS = ['Puntaje', 'Puntos', 'Horas', 'Puntos posibles', 'Puntos obtenidos', 'Calificación'];
 
 // ---------------------------------------------------------------- entrada
 
@@ -79,6 +93,12 @@ function ejecutar_(pet) {
       return leerAuditoriasBerel_();
     case 'deleteAudit':
       return conCandado_(function () { return borrarAuditoriaBerel_(pet.id); });
+    case 'mmCatalogos':
+      return catalogosMueble_();
+    case 'mmAgregar':
+      return conCandado_(function () { return agregarCatalogoMueble_(pet.hoja, pet.fila); });
+    case 'mmGuardar':
+      return conCandado_(function () { return guardarAuditoriaMueble_(pet.auditoria); });
     case 'imagen':
       return leerImagen_(pet.url);
     default:
@@ -187,6 +207,118 @@ function borrarAuditoriaBerel_(id) {
   if (!a) return { borradas: 0 };
   borrarFilas_('Berel_Resultados', 'Folio', a['Folio']);
   return { borradas: borrarFilas_('Berel_Auditorias', 'ID', id) };
+}
+
+// ---------------------------------------------------------------- Supervisión de Mueble · Ferre Mina
+
+function catalogosMueble_() {
+  var hoy = Utilities.formatDate(new Date(), ZONA, 'yyyy-MM-dd');
+  var semana = lunes_(hoy);
+  // Muebles ya auditados esta semana (cada mueble se audita 1 vez por semana).
+  var auditadas = {};
+  leerObjetos_('MM_Auditorias').forEach(function (a) {
+    if (a['Semana'] === semana) auditadas[a['Mueble']] = { folio: a['Folio'], fecha: a['Fecha'], auditor: a['Auditor'] };
+  });
+  return {
+    hoy: hoy,
+    semana: semana,
+    muebles: leerObjetos_('MM_Muebles').filter(activo_).map(function (m) {
+      return {
+        numero: m['Número'], ubicacion: m['Ubicación'], tipo: m['Tipo'], familias: m['Familias'], tramos: m['Tramos'],
+        promocion: m['Promoción'], altoValor: m['Alto valor'], titular: m['Titular'], suplente: m['Suplente'],
+        supervisorAudita: m['Supervisor que audita'],
+      };
+    }),
+    vendedores: leerObjetos_('MM_Vendedores').filter(activo_).map(function (v) {
+      return { nomina: v['Nómina'], nombre: v['Nombre'], horas: v['Horas'], supervisor: v['Supervisor'] };
+    }),
+    auditores: leerObjetos_('MM_Auditores').filter(activo_).map(function (a) {
+      return { nomina: a['Nómina'], nombre: a['Nombre'] };
+    }),
+    auditadasSemana: auditadas,
+  };
+}
+
+function agregarCatalogoMueble_(nombre, fila) {
+  var clave = CATALOGOS_MM[nombre];
+  if (!clave) throw new Error('Solo se pueden agregar muebles, vendedores o auditores.');
+  if (!fila || !String(fila[clave] || '').trim()) throw new Error('Falta ' + clave + '.');
+  if (buscarObjeto_(nombre, clave, fila[clave])) throw new Error('Ya existe ' + clave + ' ' + fila[clave] + ' en ' + nombre + '.');
+  agregarFila_(nombre, fila);
+  return { agregado: fila[clave] };
+}
+
+function guardarAuditoriaMueble_(a) {
+  if (!a || !a.id) throw new Error('No llegó la auditoría completa.');
+  if (!a.mueble || !a.mueble.numero) throw new Error('Falta el mueble.');
+  if (!a.auditor || !a.atendio) throw new Error('Faltan el auditor o quién atendió.');
+  if (!a.firmaAuditor || !a.firmaVendedor) throw new Error('Faltan las firmas.');
+  var resultados = a.resultados || [];
+  if (resultados.length !== 13) throw new Error('Deben venir los 13 puntos calificados.');
+  var evidencias = a.evidencias || {};
+  resultados.forEach(function (r) {
+    if (r.resultado !== 'No cumple') return;
+    var e = evidencias[r.punto] || {};
+    if (!e.foto || !r.observacion || !e.accion || !e.responsable || !e.fechaCompromiso) {
+      throw new Error('El punto ' + r.punto + ' no cumple y le falta su evidencia completa.');
+    }
+  });
+
+  // Si el celular reintenta (se cortó la señal), se regresa la auditoría que ya quedó guardada.
+  var previa = buscarObjeto_('MM_Auditorias', 'ID', a.id);
+  if (previa) return { id: previa['ID'], folio: previa['Folio'] };
+
+  var folio = siguienteFolio_('MM_Auditorias', 'SM');
+  var c = a.calificacion || {};
+  agregarFila_('MM_Auditorias', {
+    'ID': a.id,
+    'Folio': folio,
+    'Fecha': a.fecha,
+    'Hora': a.hora,
+    'Semana': lunes_(a.fecha),
+    'Mes': String(a.fecha).slice(0, 7),
+    'Mueble': a.mueble.numero,
+    'Ubicación': a.mueble.ubicacion,
+    'Familias': a.mueble.familias,
+    'Titular': a.mueble.titular,
+    'Suplente': a.mueble.suplente,
+    'Atendió': a.atendio,
+    'Supervisor del titular': a.supervisorTitular || '',
+    'Auditor': a.auditor,
+    'Auditor es supervisor directo': a.auditorEsSupervisor ? 'Sí' : 'No',
+    'Servicio N/A': a.servicioNA ? 'Sí' : 'No',
+    'Puntos obtenidos': c.obtenidos,
+    'Puntos posibles': c.posibles,
+    'Calificación': c.calificacion,
+    'Semáforo': c.semaforo,
+    'Críticos fallados': (c.criticosFallados || []).join(', '),
+    'Firma auditor': guardarImagen_(a.firmaAuditor, 'Firmas', folio + '_auditor'),
+    'Firmó vendedor': a.firmoVendedor || a.mueble.titular,
+    'Firma vendedor': guardarImagen_(a.firmaVendedor, 'Firmas', folio + '_vendedor'),
+    'Registrado': ahora_(),
+  });
+  agregarFilas_('MM_Resultados', resultados.map(function (r) {
+    return {
+      'Folio': folio, 'Punto': r.punto, 'Bloque': r.bloque, 'Descripción': r.descripcion, 'Resultado': r.resultado,
+      'Puntos posibles': r.posibles, 'Puntos obtenidos': r.obtenidos, 'Observación': r.observacion || '',
+    };
+  }));
+  agregarFilas_('MM_Evidencias', resultados.filter(function (r) { return r.resultado === 'No cumple'; }).map(function (r) {
+    var e = evidencias[r.punto];
+    return {
+      'Folio': folio, 'Punto': r.punto, 'Foto': guardarImagen_(e.foto, 'Fotos', folio + '_' + r.punto),
+      'Acción correctiva': e.accion, 'Responsable': e.responsable, 'Fecha compromiso': e.fechaCompromiso,
+    };
+  }));
+  return { id: a.id, folio: folio };
+}
+
+/** Lunes (AAAA-MM-DD) de la semana de una fecha AAAA-MM-DD. La semana va de lunes a domingo. */
+function lunes_(fecha) {
+  var p = String(fecha).split('-');
+  var f = new Date(Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2])));
+  f.setUTCDate(f.getUTCDate() - (f.getUTCDay() + 6) % 7);
+  return f.toISOString().slice(0, 10);
 }
 
 // ---------------------------------------------------------------- folios

@@ -1,5 +1,5 @@
 import React, { useState, Suspense, lazy } from 'react';
-import { AuditRecord } from './types';
+import { AuditRecord, AuditoriaMueble } from './types';
 import { SheetsService } from './services/sheetsService';
 import { BEREL_LOGO_URL } from './constants';
 
@@ -7,8 +7,10 @@ import { BEREL_LOGO_URL } from './constants';
 const AuditForm = lazy(() => import('./components/AuditForm'));
 const ReportView = lazy(() => import('./components/ReportView'));
 const AdminConsole = lazy(() => import('./components/AdminConsole'));
+const CapturaMueble = lazy(() => import('./components/mueble/CapturaMueble'));
+const MuebleGuardado = lazy(() => import('./components/mueble/MuebleGuardado'));
 
-type ViewState = 'HOME' | 'AUDIT' | 'REPORT' | 'ADMIN';
+type ViewState = 'HOME' | 'AUDIT' | 'REPORT' | 'ADMIN' | 'MUEBLE' | 'MUEBLE_OK';
 
 // Internal Loading Component for Suspense
 const LoadingSpinner = () => (
@@ -37,6 +39,14 @@ const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('HOME');
   const [currentAudit, setCurrentAudit] = useState<AuditRecord | null>(null);
   const [previousView, setPreviousView] = useState<ViewState>('HOME');
+  const [muebleGuardado, setMuebleGuardado] = useState<AuditoriaMueble | null>(null);
+  // Cambia para que cada captura de mueble empiece en blanco.
+  const [capturaMueble, setCapturaMueble] = useState(0);
+
+  const iniciarMueble = () => {
+    setCapturaMueble(n => n + 1);
+    setView('MUEBLE');
+  };
 
   const startAudit = () => {
     setView('AUDIT');
@@ -93,15 +103,22 @@ const App: React.FC = () => {
               />
             </div>
 
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">Auditoría de Tiendas</h1>
-            <p className="text-gray-500 mb-10">Evaluación de Estándares Operativos y Servicio</p>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">Auditorías</h1>
+            <p className="text-gray-500 mb-10">Tiendas Berel y Supervisión de Mueble</p>
 
             <div className="space-y-4">
               <button 
                 onClick={startAudit}
                 className="w-full bg-red-600 text-white text-lg font-bold py-4 rounded-xl shadow-lg transform transition hover:scale-105 hover:bg-red-700 active:scale-95 flex items-center justify-center"
               >
-                <span className="mr-3 text-2xl">📋</span> Iniciar Nueva Auditoría
+                <span className="mr-3 text-2xl">📋</span> Auditoría Tienda Berel
+              </button>
+
+              <button
+                onClick={iniciarMueble}
+                className="w-full bg-blue-900 text-white text-lg font-bold py-4 rounded-xl shadow-lg transform transition hover:scale-105 hover:bg-blue-800 active:scale-95 flex items-center justify-center"
+              >
+                <span className="mr-3 text-2xl">🗄️</span> Supervisión de Mueble – Ferre Mina
               </button>
               
               <SimpleTooltip message="Panel para administradores: Consulta el historial de auditorías, exporta reportes a CSV y administra el catálogo.">
@@ -139,6 +156,26 @@ const App: React.FC = () => {
                 onCancel={() => setView('HOME')} 
               />
              </div>
+          </div>
+        )}
+
+        {view === 'MUEBLE' && (
+          <div className="min-h-screen bg-gray-50 w-full animate-fade-in-up">
+            <header className="bg-white border-b border-gray-200 p-4 flex justify-between items-center">
+              <h1 className="font-bold text-blue-900 text-sm md:text-base">Supervisión de Mueble – Ferre Mina</h1>
+              <button onClick={() => setView('HOME')} className="text-xs text-gray-500 hover:text-red-600 font-medium px-2 py-1">Cancelar</button>
+            </header>
+            <CapturaMueble
+              key={capturaMueble}
+              onGuardado={a => { setMuebleGuardado(a); setView('MUEBLE_OK'); }}
+              onCancel={() => setView('HOME')}
+            />
+          </div>
+        )}
+
+        {view === 'MUEBLE_OK' && muebleGuardado && (
+          <div className="min-h-screen bg-gray-50 w-full animate-fade-in">
+            <MuebleGuardado auditoria={muebleGuardado} onOtra={iniciarMueble} onInicio={() => setView('HOME')} />
           </div>
         )}
 

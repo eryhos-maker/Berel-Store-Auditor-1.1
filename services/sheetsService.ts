@@ -1,4 +1,4 @@
-import { AuditRecord, Store, Person, AuditItem } from '../types';
+import { AuditRecord, Store, Person, AuditItem, CatalogosMueble, AuditoriaMueble } from '../types';
 
 // Conexión con la hoja de Google Sheets (Apps Script publicado como aplicación web).
 // Se configura en Vercel: VITE_SHEETS_URL (termina en /exec) y VITE_SHEETS_KEY.
@@ -139,6 +139,16 @@ export const SheetsService = {
     } catch (e) {
       alert('Error al borrar auditoría: ' + (e as Error).message);
     }
+  },
+
+  // --- Supervisión de Mueble · Ferre Mina ---
+
+  getCatalogosMueble: (): Promise<CatalogosMueble> => llamar<CatalogosMueble>('mmCatalogos'),
+
+  // El folio lo pone la hoja (SM-AAAAMMDD-0001). Fotos y firmas se van a Drive.
+  saveAuditoriaMueble: async (a: AuditoriaMueble): Promise<AuditoriaMueble> => {
+    const r = await llamar<{ id: string; folio: string }>('mmGuardar', { auditoria: a });
+    return { ...a, id: r.id, folio: r.folio };
   },
 
   /** Convierte un link de Drive (foto o firma) en imagen que se puede mostrar y meter al PDF. */
