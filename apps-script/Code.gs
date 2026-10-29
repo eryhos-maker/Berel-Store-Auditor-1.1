@@ -129,6 +129,7 @@ function setup() {
   });
   carpeta_('Fotos');
   carpeta_('Firmas');
+  resumenMensual_(true);
   var msg = creadas.length ? 'Pestañas creadas: ' + creadas.join(', ') : 'Todas las pestañas ya existían.';
   Logger.log(msg);
   return msg;
@@ -271,6 +272,7 @@ function guardarAuditoriaMueble_(a) {
   if (previa) return { id: previa['ID'], folio: previa['Folio'] };
 
   var folio = siguienteFolio_('MM_Auditorias', 'SM');
+  resumenMensual_(false);
   var c = a.calificacion || {};
   agregarFila_('MM_Auditorias', {
     'ID': a.id,
@@ -347,6 +349,45 @@ function leerAuditoriasMueble_() {
       registrado: a['Registrado'],
     };
   });
+}
+
+/**
+ * Pestaña Resumen_Mensual: promedio de supervisión de mueble por vendedor titular y mes, con fórmulas
+ * (se actualiza sola). Las columnas se ubican por nombre al crearla; si alguien mueve columnas de
+ * MM_Auditorias, se vuelve a correr setup() para rehacer la fórmula.
+ */
+function resumenMensual_(rehacer) {
+  var libro = SpreadsheetApp.getActiveSpreadsheet();
+  var h = libro.getSheetByName('Resumen_Mensual');
+  if (h && !rehacer) return;
+  if (!h) h = libro.insertSheet('Resumen_Mensual');
+  var enc = encabezadosDe_(hoja_('MM_Auditorias'));
+  var col = function (nombre) {
+    var i = enc.indexOf(nombre);
+    if (i < 0) throw new Error('Falta la columna ' + nombre + ' en MM_Auditorias.');
+    return 'Col' + (i + 1);
+  };
+  var tit = col('Titular'), mes = col('Mes'), cal = col('Calificación');
+  var consulta = 'select ' + tit + ', ' + mes + ', count(' + cal + '), avg(' + cal + '), min(' + cal + '), max(' + cal + '), avg(' + cal + ')*0.5' +
+    ' where ' + tit + " <> '' and " + cal + ' is not null' +
+    ' group by ' + tit + ', ' + mes +
+    ' order by ' + mes + ' desc, ' + tit +
+    " label " + tit + " 'Vendedor (titular)', " + mes + " 'Mes', count(" + cal + ") 'Auditorías', avg(" + cal + ") 'Promedio', " +
+    'min(' + cal + ") 'Mínima', max(" + cal + ") 'Máxima', avg(" + cal + ")*0.5 'Puntos tarjeta (de 50)'" +
+    " format avg(" + cal + ") '0.0', avg(" + cal + ")*0.5 '0.0'";
+  h.clear();
+  h.getRange('A1').setValue('Supervisión de Mueble · promedio mensual por vendedor titular').setFontWeight('bold');
+  h.getRange('A2').setValue('Se actualiza solo con cada auditoría. Puntos tarjeta = promedio × 0.5 (la tarjeta mensual vale 50 pts). No escribir en esta pestaña.')
+    .setFontColor('#666666');
+  h.getRange('A4').setFormula('=QUERY({MM_Auditorias!A1:' + columnaLetra_(enc.length) + '}, "' + consulta + '", 1)');
+  h.getRange('A4:G4').setFontWeight('bold');
+  h.setFrozenRows(4);
+}
+
+function columnaLetra_(n) {
+  var s = '';
+  while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); }
+  return s;
 }
 
 /** Lunes (AAAA-MM-DD) de la semana de una fecha AAAA-MM-DD. La semana va de lunes a domingo. */

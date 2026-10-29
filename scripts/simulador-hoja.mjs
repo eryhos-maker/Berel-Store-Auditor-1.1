@@ -40,7 +40,16 @@ function Hoja(nombre) {
     getLastColumn: ultimaCol,
     setFrozenRows: () => self,
     deleteRow: n => { filas().splice(n - 1, 1); return self; },
+    clear: () => { datos().celdas = []; datos().formatos = {}; return self; },
     getRange: (r, c, nr = 1, nc = 1) => {
+      if (typeof r === 'string') {
+        // Notación A1 sencilla ("A4" o "A4:G4").
+        const [ini, fin] = r.split(':');
+        const pos = x => { const m = /^([A-Z]+)(\d+)$/.exec(x); return [Number(m[2]), [...m[1]].reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0)]; };
+        const [f1, c1] = pos(ini);
+        const [f2, c2] = fin ? pos(fin) : [f1, c1];
+        return self.getRange(f1, c1, f2 - f1 + 1, c2 - c1 + 1);
+      }
       const recorrer = fn => Array.from({ length: nr }, (_, i) => Array.from({ length: nc }, (_, j) => fn(r - 1 + i, c - 1 + j)));
       const rango = {
         getValues: () => recorrer(celda),
@@ -57,6 +66,10 @@ function Hoja(nombre) {
         },
         setNumberFormat: f => { recorrer((i, j) => { datos().formatos[`${i},${j}`] = f; }); return rango; },
         setFontWeight: () => rango,
+        setFontColor: () => rango,
+        setValue: v => rango.setValues([[v]]),
+        // Las fórmulas no se calculan en el simulador: se guarda el texto para revisarlo.
+        setFormula: f => { poner(r - 1, c - 1, f); return rango; },
       };
       return rango;
     },

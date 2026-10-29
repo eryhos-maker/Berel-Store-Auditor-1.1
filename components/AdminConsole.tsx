@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { AuditRecord, Store, Person } from '../types';
 import { SheetsService } from '../services/sheetsService';
 import { AUDIT_SECTIONS } from '../constants';
+
+const ConsolaMueble = lazy(() => import('./mueble/ConsolaMueble'));
 
 interface AdminConsoleProps {
   onBack: () => void;
@@ -12,7 +14,7 @@ const AdminConsole: React.FC<AdminConsoleProps> = ({ onBack, onViewAudit }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   
-  const [activeTab, setActiveTab] = useState<'HISTORY' | 'DATA'>('HISTORY');
+  const [activeTab, setActiveTab] = useState<'HISTORY' | 'DATA' | 'MUEBLE'>('HISTORY');
   const [history, setHistory] = useState<AuditRecord[]>([]);
   const [loading, setLoading] = useState(false);
   
@@ -251,7 +253,7 @@ const AdminConsole: React.FC<AdminConsoleProps> = ({ onBack, onViewAudit }) => {
 
       <div className="max-w-6xl mx-auto p-4 md:p-6">
         {/* Tabs */}
-        <div className="flex space-x-4 mb-6 border-b border-gray-200">
+        <div className="flex space-x-4 mb-6 border-b border-gray-200 overflow-x-auto whitespace-nowrap">
           <button 
             className={`pb-2 px-4 font-medium transition-colors ${activeTab === 'HISTORY' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500 hover:text-gray-700'}`}
             onClick={() => setActiveTab('HISTORY')}
@@ -264,7 +266,19 @@ const AdminConsole: React.FC<AdminConsoleProps> = ({ onBack, onViewAudit }) => {
           >
             Gestión de Datos
           </button>
+          <button
+            className={`pb-2 px-4 font-medium transition-colors ${activeTab === 'MUEBLE' ? 'border-b-2 border-red-600 text-red-600' : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => setActiveTab('MUEBLE')}
+          >
+            Mueble Mina
+          </button>
         </div>
+
+        {activeTab === 'MUEBLE' && (
+          <Suspense fallback={<p className="text-center text-gray-500 py-10">Cargando…</p>}>
+            <ConsolaMueble />
+          </Suspense>
+        )}
 
         {activeTab === 'HISTORY' && (
           <div>

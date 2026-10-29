@@ -145,11 +145,12 @@ export const SheetsService = {
 
   getCatalogosMueble: (): Promise<CatalogosMueble> => llamar<CatalogosMueble>('mmCatalogos'),
 
-  /** Historial de supervisión de mueble, más recientes primero. */
+  /** Historial de supervisión de mueble, más recientes primero (por fecha de la auditoría). */
   getAuditoriasMueble: async (): Promise<AuditoriaMueble[]> => {
     const lista = await llamar<(AuditoriaMueble & { registrado: string })[]>('mmAuditorias');
+    const orden = (a: AuditoriaMueble & { registrado: string }) => `${a.fecha} ${a.hora} ${a.registrado || ''}`;
     return lista
-      .sort((a, b) => (b.registrado || `${b.fecha} ${b.hora}`).localeCompare(a.registrado || `${a.fecha} ${a.hora}`))
+      .sort((a, b) => orden(b).localeCompare(orden(a)))
       .map(({ registrado, ...a }) => a);
   },
 
