@@ -8,7 +8,7 @@ const AuditForm = lazy(() => import('./components/AuditForm'));
 const ReportView = lazy(() => import('./components/ReportView'));
 const AdminConsole = lazy(() => import('./components/AdminConsole'));
 const CapturaMueble = lazy(() => import('./components/mueble/CapturaMueble'));
-const MuebleGuardado = lazy(() => import('./components/mueble/MuebleGuardado'));
+const ReporteMueble = lazy(() => import('./components/mueble/ReporteMueble'));
 
 type ViewState = 'HOME' | 'AUDIT' | 'REPORT' | 'ADMIN' | 'MUEBLE' | 'MUEBLE_OK';
 
@@ -175,7 +175,8 @@ const App: React.FC = () => {
 
         {view === 'MUEBLE_OK' && muebleGuardado && (
           <div className="min-h-screen bg-gray-50 w-full animate-fade-in">
-            <MuebleGuardado auditoria={muebleGuardado} onOtra={iniciarMueble} onInicio={() => setView('HOME')} />
+            <div className="bg-green-600 text-white text-center text-sm font-semibold py-2">✅ Auditoría guardada · {muebleGuardado.folio}</div>
+            <ReporteMueble auditoria={muebleGuardado} onClose={() => setView('HOME')} textoCerrar="Inicio" onOtra={iniciarMueble} />
           </div>
         )}
 

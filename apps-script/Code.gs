@@ -97,6 +97,8 @@ function ejecutar_(pet) {
       return catalogosMueble_();
     case 'mmAgregar':
       return conCandado_(function () { return agregarCatalogoMueble_(pet.hoja, pet.fila); });
+    case 'mmAuditorias':
+      return leerAuditoriasMueble_();
     case 'mmGuardar':
       return conCandado_(function () { return guardarAuditoriaMueble_(pet.auditoria); });
     case 'imagen':
@@ -311,6 +313,40 @@ function guardarAuditoriaMueble_(a) {
     };
   }));
   return { id: a.id, folio: folio };
+}
+
+/** Todas las auditorías de mueble con sus 13 puntos y evidencias, con la misma forma con que la app las guarda. */
+function leerAuditoriasMueble_() {
+  var resultados = {};
+  leerObjetos_('MM_Resultados').forEach(function (r) {
+    (resultados[r['Folio']] = resultados[r['Folio']] || []).push({
+      punto: r['Punto'], bloque: r['Bloque'], descripcion: r['Descripción'], resultado: r['Resultado'],
+      posibles: Number(r['Puntos posibles']) || 0, obtenidos: Number(r['Puntos obtenidos']) || 0, observacion: r['Observación'],
+    });
+  });
+  var evidencias = {};
+  leerObjetos_('MM_Evidencias').forEach(function (e) {
+    (evidencias[e['Folio']] = evidencias[e['Folio']] || {})[e['Punto']] = {
+      foto: e['Foto'], accion: e['Acción correctiva'], responsable: e['Responsable'], fechaCompromiso: e['Fecha compromiso'],
+    };
+  });
+  return leerObjetos_('MM_Auditorias').map(function (a) {
+    return {
+      id: a['ID'], folio: a['Folio'], fecha: a['Fecha'], hora: a['Hora'], semana: a['Semana'], mes: a['Mes'],
+      mueble: { numero: a['Mueble'], ubicacion: a['Ubicación'], familias: a['Familias'], titular: a['Titular'], suplente: a['Suplente'] },
+      supervisorTitular: a['Supervisor del titular'], atendio: a['Atendió'], auditor: a['Auditor'],
+      auditorEsSupervisor: a['Auditor es supervisor directo'] === 'Sí', servicioNA: a['Servicio N/A'] === 'Sí',
+      resultados: resultados[a['Folio']] || [],
+      evidencias: evidencias[a['Folio']] || {},
+      calificacion: {
+        obtenidos: Number(a['Puntos obtenidos']) || 0, posibles: Number(a['Puntos posibles']) || 0,
+        calificacion: Number(a['Calificación']) || 0, semaforo: a['Semáforo'],
+        criticosFallados: String(a['Críticos fallados'] || '').split(',').map(function (x) { return x.trim(); }).filter(String),
+      },
+      firmaAuditor: a['Firma auditor'], firmoVendedor: a['Firmó vendedor'], firmaVendedor: a['Firma vendedor'],
+      registrado: a['Registrado'],
+    };
+  });
 }
 
 /** Lunes (AAAA-MM-DD) de la semana de una fecha AAAA-MM-DD. La semana va de lunes a domingo. */

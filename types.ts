@@ -135,4 +135,6 @@ export interface AuditoriaMueble {
   firmaAuditor: string;
   firmoVendedor: string;
   firmaVendedor: string;
+  semana?: string; // solo al leer de la hoja
+  mes?: string;
 }

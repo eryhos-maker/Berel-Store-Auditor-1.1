@@ -145,6 +145,14 @@ export const SheetsService = {
 
   getCatalogosMueble: (): Promise<CatalogosMueble> => llamar<CatalogosMueble>('mmCatalogos'),
 
+  /** Historial de supervisión de mueble, más recientes primero. */
+  getAuditoriasMueble: async (): Promise<AuditoriaMueble[]> => {
+    const lista = await llamar<(AuditoriaMueble & { registrado: string })[]>('mmAuditorias');
+    return lista
+      .sort((a, b) => (b.registrado || `${b.fecha} ${b.hora}`).localeCompare(a.registrado || `${a.fecha} ${a.hora}`))
+      .map(({ registrado, ...a }) => a);
+  },
+
   // El folio lo pone la hoja (SM-AAAAMMDD-0001). Fotos y firmas se van a Drive.
   saveAuditoriaMueble: async (a: AuditoriaMueble): Promise<AuditoriaMueble> => {
     const r = await llamar<{ id: string; folio: string }>('mmGuardar', { auditoria: a });
