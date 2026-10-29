@@ -1,0 +1,6 @@
+.env.local
+*.local
+node_modules
+dist
+package-lock.json
+.clasp.json

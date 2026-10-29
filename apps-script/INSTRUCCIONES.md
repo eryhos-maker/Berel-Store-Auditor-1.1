@@ -1,5 +1,20 @@
 # Conectar la app de auditorías con Google Sheets
 
+## Ya está publicado (29/10/2026)
+
+- **Hoja:** "Auditorías Ferre Don Nico" en eryhos@gmail.com (id `1IZhyf5fA3csy-Nz6viBy1wVMstmPn4wPJUf9znt3Clk`).
+- **Script:** ligado a esa hoja; `.clasp.json` tiene su ID.
+- **Implementación web:** `AKfycbxODjnQqxJXBv3dC1elvo6cDgVscAtm4ULtIREcPqV6wKHVIEj3jzbOiLZuxXpTXWONAQ`.
+- **Clave:** en Propiedades del script (`CLAVE`) y en `conexion-apps-script.local` (PC de gerencia). **No se sube a GitHub.**
+- **Vercel (proyecto bsa1):** `VITE_SHEETS_URL` y `VITE_SHEETS_KEY` puestas solo en *Preview*.
+
+Para actualizar el script: `clasp push --force` y luego
+`clasp update-deployment AKfycbxODjnQqxJXBv3dC1elvo6cDgVscAtm4ULtIREcPqV6wKHVIEj3jzbOiLZuxXpTXWONAQ` (así la URL no cambia).
+
+---
+
+Lo de abajo es cómo se hace a mano, por si hay que repetirlo en otra cuenta.
+
 Se hace una sola vez y toma unos 15 minutos. Al terminar tendrás una **dirección (URL)** y una **clave** que se ponen en Vercel.
 
 ## 1. Crear la hoja
